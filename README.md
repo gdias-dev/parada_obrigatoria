@@ -18,6 +18,7 @@ para o **Parada Obrigatória — Bar e Distribuidora de Bebidas**.
 | 5 | Pedidos online e entregas | ✅ Pronta |
 | 6 | Relatórios financeiros | ✅ Pronta |
 | 7 | Publicação final, painel inicial, backup e instalação nos aparelhos | ✅ Pronta |
+| + | Venda de doses de destilados (`atualizar-doses.sql`) | ✅ Pronta |
 
 O banco (`database/schema.sql`) já tem as tabelas de **todas** as etapas.
 
@@ -110,7 +111,7 @@ Teste rápido: `https://seudominio/api/health` deve responder `{"ok":true,...}`.
 - [ ] `api/config.php` com `debug => false` e `jwt_secret` aleatório
 - [ ] `https://seudominio/api/health` responde `{"ok":true,...}`
 - [ ] `https://seudominio/api/config.php` responde **403** (bloqueado)
-- [ ] Versão do banco = 5 (Dados da loja → Backup e sistema)
+- [ ] Versão do banco = 6 (Dados da loja → Backup e sistema)
 - [ ] Primeiro backup baixado
 
 ---
@@ -139,7 +140,7 @@ No `config.php` de desenvolvimento use `'cors_origins' => ['http://localhost:517
 1. Gere o pacote (`./montar-pacote.sh`) ou use o `parada-obrigatoria-deploy.zip` da etapa.
 2. Envie **todo o conteúdo** para a `www` por cima dos arquivos atuais (FileZilla: "Sobrescrever").
 3. **Não apague** o `api/config.php` — ele não vem no pacote.
-4. Se a etapa trouxer arquivo `database/atualizar-*.sql`, importe no phpMyAdmin **uma vez**. (Etapa 3: `atualizar-etapa3.sql`; etapa 4: `atualizar-etapa4.sql`; etapa 5: `atualizar-etapa5.sql`. As etapas 6 e 7 não mudam o banco.)
+4. Se a etapa trouxer arquivo `database/atualizar-*.sql`, importe no phpMyAdmin **uma vez**. (Etapa 3: `atualizar-etapa3.sql`; etapa 4: `atualizar-etapa4.sql`; etapa 5: `atualizar-etapa5.sql`. As etapas 6 e 7 não mudam o banco. Doses: `atualizar-doses.sql`.)
 5. Nos aparelhos aparece a faixa **"Versão nova do sistema disponível" → Atualizar** (a partir da etapa 7).
 
 ## Rotas da API (etapa 1)
@@ -273,3 +274,10 @@ Período máximo: 2 anos. Sem `agrupar`, escolhe sozinho (até 31 dias: dia; at�
 
 O `sw.js` recebe a versão no build (`vite.config.js`), então cada pacote novo é detectado pelos aparelhos.
 O manual de uso para a loja está no documento "Manual do sistema Parada Obrigatória".
+
+### Doses de destilados
+- A garrafa guarda `volume_ml`; a dose aponta para a garrafa (`produto_base_id`) e guarda `dose_ml`.
+- `fator` da dose = `dose_ml / volume_ml` (6 casas). Vender 1 dose baixa essa fração da garrafa; custo = custo da garrafa × fator.
+- Estoque com 4 casas decimais (garrafa aberta). Mudar o volume da garrafa recalcula todas as doses dela.
+- Dose não aceita entrada (é na garrafa); aceita saída (cortesia, derramou). Por padrão não aparece online.
+- Planilha: colunas "Volume da garrafa (ml)" e "Dose (ml)"; a coluna "Engradado ou dose de" recebe o código da garrafa.

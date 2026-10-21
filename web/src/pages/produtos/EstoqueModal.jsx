@@ -30,7 +30,7 @@ export default function EstoqueModal({ produto, onFechar, onSalvo }) {
 
   useEffect(() => {
     if (!produto) return
-    setTipo('entrada'); setQtd(''); setMotivo(''); setErro('')
+    setTipo(produto.dose_ml ? 'saida' : 'entrada'); setQtd(''); setMotivo(''); setErro('')
     setCusto(isAdmin ? paraCampo(produto.preco_custo) : '')
     setHistorico(null)
     get(`/produtos/${produto.id}/movimentacoes`).then(setHistorico).catch(() => setHistorico([]))
@@ -39,12 +39,13 @@ export default function EstoqueModal({ produto, onFechar, onSalvo }) {
   if (!produto) return null
 
   const emb = !!produto.produto_base_id
-  const controla = emb ? produto.base_controla : produto.controla_estoque
+  const dose = !!produto.dose_ml
+  const controla = (emb ? produto.base_controla : produto.controla_estoque) && !(dose && !isAdmin)
   const n = numero(qtd)
   const atual = emb ? produto.estoque_embalagens : produto.estoque
   const depois = n === null ? null : tipo === 'entrada' ? atual + n : tipo === 'saida' ? atual - n : n
   const un = produto.unidade
-  const tipos = Object.entries(TIPOS).filter(([k]) => !(emb && k === 'ajuste'))
+  const tipos = Object.entries(TIPOS).filter(([k]) => !(emb && k === 'ajuste') && !(dose && k === 'entrada'))
 
   async function salvar(e) {
     e.preventDefault()
@@ -80,7 +81,9 @@ export default function EstoqueModal({ produto, onFechar, onSalvo }) {
     >
       <div className="estoque-cab">
         <strong>{produto.nome}</strong>
-        {emb
+        {dose
+          ? <span>Dá para servir <b>{quantidade(atual)} doses</b> ({quantidade(produto.base_estoque)} garrafas de {produto.base_nome}). Entrada e contagem são feitas na garrafa; aqui só a saída de doses (cortesia, derramou).</span>
+          : emb
           ? <span>Tem <b>{quantidade(atual)} {un.toLowerCase()}</b> ({quantidade(produto.base_estoque)} unidades de {produto.base_nome}). O estoque é guardado em unidades.</span>
           : controla ? <span>Estoque agora: <b>{quantidade(atual, un)}</b></span> : <span>Este produto não controla estoque.</span>}
       </div>
@@ -96,7 +99,7 @@ export default function EstoqueModal({ produto, onFechar, onSalvo }) {
         )}
 
         <div className="grid-form duas">
-          <Campo rotulo={tipo === 'ajuste' ? 'Quantidade contada' : emb ? 'Quantos engradados' : 'Quantidade'} dica={emb && n ? `= ${quantidade(n * produto.fator)} unidades` : TIPOS[tipo].dica}>
+          <Campo rotulo={tipo === 'ajuste' ? 'Quantidade contada' : dose ? 'Quantas doses' : emb ? 'Quantos engradados' : 'Quantidade'} dica={dose && n ? `= ${quantidade(n * produto.fator)} garrafa` : emb && n ? `= ${quantidade(n * produto.fator)} unidades` : tipo === 'ajuste' && produto.volume_ml ? 'Garrafa aberta: use decimal (ex.: 3,5)' : TIPOS[tipo].dica}>
             {(p) => <InputQtd {...p} value={qtd} onChange={setQtd} required autoFocus sufixo={un.toLowerCase()} />}
           </Campo>
           {isAdmin && tipo === 'entrada' && (

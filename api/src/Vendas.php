@@ -32,7 +32,7 @@ final class Vendas
 
             $emb = ehEmbalagem($p);
             $estoqueId = $emb ? (int)$p['produto_base_id'] : (int)$p['id'];
-            $unidades = round($qtd * ($emb ? (float)$p['fator'] : 1), 3);
+            $unidades = round($qtd * ($emb ? (float)$p['fator'] : 1), 4);
             $preco = (float)$p['preco_venda'];
 
             // Casco: vale para a unidade (Coca 2L). Num engradado, conta 1 casco por unidade.

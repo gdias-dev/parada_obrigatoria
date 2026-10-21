@@ -6,7 +6,7 @@ declare(strict_types=1);
  * @var Router $r
  */
 
-const VERSAO_SISTEMA = '1.0.0';
+const VERSAO_SISTEMA = '1.1.0';
 
 /** Resumo do dia para a tela inicial. Funcionário não recebe valores de lucro nem faturamento. */
 $r->get('/painel', function () {
@@ -58,7 +58,7 @@ $r->get('/sistema/info', function () {
     return [
         'versao_sistema' => VERSAO_SISTEMA,
         'versao_banco' => (int)($cfg['versao_banco'] ?? 1),
-        'versao_banco_esperada' => 5,
+        'versao_banco_esperada' => 6,
         'php' => PHP_VERSION,
         'mysql' => (string)Db::value('SELECT VERSION()'),
         'ultimo_backup' => $cfg['ultimo_backup'] ?? null,

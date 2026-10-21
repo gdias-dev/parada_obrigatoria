@@ -128,6 +128,9 @@ const BuscaProduto = forwardRef(function BuscaProduto({ onEscolher, onErro, auto
 })
 
 export function infoEstoque(p, curto = false) {
+  if (p.dose_ml) {
+    return curto ? `${p.estoque_embalagens} doses` : `Dose de ${p.dose_ml} ml · dá ${p.estoque_embalagens} doses (${quantidade(p.base_estoque)} garrafas)`
+  }
   if (p.produto_base_id) {
     return curto ? `${p.estoque_embalagens} cx` : `Engradado com ${p.fator} · tem ${p.estoque_embalagens} (${quantidade(p.base_estoque)} un)`
   }

@@ -10,8 +10,10 @@ const COLUNAS = [
   { chave: 'venda', titulo: 'Preço de venda', largura: 15, dinheiro: true },
   { chave: 'estoque', titulo: 'Estoque', largura: 10, numero: true },
   { chave: 'minimo', titulo: 'Estoque mínimo', largura: 15, numero: true },
-  { chave: 'embalagem_de', titulo: 'Engradado de (código da unidade)', largura: 30, texto: true },
+  { chave: 'embalagem_de', titulo: 'Engradado ou dose de (código da unidade)', largura: 34, texto: true },
   { chave: 'qtd_embalagem', titulo: 'Qtd no engradado', largura: 16, numero: true },
+  { chave: 'volume_ml', titulo: 'Volume da garrafa (ml)', largura: 20, numero: true },
+  { chave: 'dose_ml', titulo: 'Dose (ml)', largura: 11, numero: true },
 ]
 
 // Nomes de coluna aceitos (sem acento, minúsculo, sem espaço). Assim planilhas
@@ -25,7 +27,9 @@ const APELIDOS = {
   venda: ['precodevenda', 'venda', 'precovenda', 'preco', 'valordevenda', 'valorvenda', 'valor', 'precounitario'],
   estoque: ['estoque', 'quantidade', 'qtd', 'qtde', 'saldo', 'estoqueatual', 'quant'],
   minimo: ['estoqueminimo', 'minimo', 'min', 'qtdminima', 'estoquemin'],
-  embalagem_de: ['engradadodecodigodaunidade', 'embalagemdecodigodaunidade', 'engradadode', 'embalagemde', 'codigodaunidade', 'unidadebase'],
+  embalagem_de: ['engradadooudosedecodigodaunidade', 'engradadodecodigodaunidade', 'dosede', 'dosedecodigodagarrafa', 'embalagemdecodigodaunidade', 'engradadode', 'embalagemde', 'codigodaunidade', 'unidadebase'],
+  volume_ml: ['volumedagarrafaml', 'volumedagarrafa', 'volumeml', 'volume', 'ml', 'conteudoml'],
+  dose_ml: ['doseml', 'dose', 'tamanhodadose', 'tamanhodadoseml'],
   qtd_embalagem: ['qtdnoengradado', 'qtdnaembalagem', 'quantidadenoengradado', 'quantidadenaembalagem', 'fator', 'qtdembalagem', 'unidadesporengradado'],
 }
 
@@ -111,6 +115,8 @@ const EXEMPLOS = [
   { codigo: '7894900011517', nome: 'Coca-Cola Lata 350ml', categoria: 'Refrigerantes e Águas', unidade: 'UN', custo: 2.79, venda: 5, estoque: 120, minimo: 24 },
   { codigo: '', nome: 'Gelo em cubo 5kg', categoria: 'Gelo e Carvão', unidade: 'PCT', custo: 6, venda: 12, estoque: 30, minimo: 10 },
   { codigo: '17896045504913', nome: 'Pack Heineken Long Neck (6)', categoria: 'Cervejas', unidade: 'PCT', venda: 45, embalagem_de: '7896045504916', qtd_embalagem: 6 },
+  { codigo: '7893218000428', nome: 'Vodka Smirnoff 998ml', categoria: 'Destilados', unidade: 'UN', custo: 32, venda: 55, estoque: 6, minimo: 2, volume_ml: 998 },
+  { codigo: '', nome: 'Dose Smirnoff', categoria: 'Destilados', unidade: 'UN', venda: 8, embalagem_de: '7893218000428', dose_ml: 50 },
 ]
 
 const INSTRUCOES = [
@@ -129,6 +135,11 @@ const INSTRUCOES = [
   ['• Cadastre a unidade normalmente (ex.: Cerveja Original 600ml, com o estoque em unidades).'],
   ['• Numa linha própria, cadastre o engradado: nome, preço de venda, "Engradado de" = código de barras da unidade e "Qtd no engradado" = 24.'],
   ['• Engradado não tem estoque nem custo próprios: o sistema usa os da unidade (deixe essas colunas vazias).'],
+  [''],
+  ['Doses de destilados'],
+  ['• Na linha da garrafa, preencha "Volume da garrafa (ml)" (ex.: 1000). O estoque continua em garrafas.'],
+  ['• Numa linha própria, cadastre a dose: nome (ex.: Dose Smirnoff), preço de venda, "Engradado ou dose de" = código da garrafa e "Dose (ml)" = 50.'],
+  ['• Cada dose vendida baixa a fração da garrafa (50 ml de 1000 ml = 0,05 garrafa). O custo da dose é calculado pela garrafa.'],
   [''],
   ['Produtos que já existem'],
   ['• O sistema procura pelo código de barras; se não tiver código, pelo nome exato.'],

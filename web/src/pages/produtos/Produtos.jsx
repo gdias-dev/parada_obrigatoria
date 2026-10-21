@@ -219,13 +219,15 @@ export default function Produtos() {
                       <strong>{p.nome}</strong>
                       <span className="nome-sub">
                         {p.categoria || 'Sem categoria'}{p.codigo_barras && ` · ${p.codigo_barras}`}{!p.ativo && ' · desativado'}
-                        {p.produto_base_id && ` · engradado com ${p.fator} × ${p.base_nome}`}
+                        {p.dose_ml ? ` · dose de ${p.dose_ml} ml de ${p.base_nome}` : p.produto_base_id && ` · engradado com ${p.fator} × ${p.base_nome}`}
                         {p.usa_casco && ` · casco ${dinheiro(p.valor_casco)}`}
                       </span>
                     </td>
                     <td className="num" data-rotulo="Estoque">
                       {p.produto_base_id
-                        ? <span className={`qtd ${s || ''}`}>{quantidade(p.estoque_embalagens)} {p.unidade.toLowerCase()}<small className="nome-sub"> ({quantidade(p.base_estoque)} un)</small></span>
+                        ? p.dose_ml
+                          ? <span className={`qtd ${s || ''}`}>{quantidade(p.estoque_embalagens)} doses<small className="nome-sub"> ({quantidade(p.base_estoque)} garrafas)</small></span>
+                          : <span className={`qtd ${s || ''}`}>{quantidade(p.estoque_embalagens)} {p.unidade.toLowerCase()}<small className="nome-sub"> ({quantidade(p.base_estoque)} un)</small></span>
                         : p.controla_estoque
                           ? <span className={`qtd ${s || ''}`}>{quantidade(p.estoque, p.unidade)}{s === 'baixo' && <small> acabando</small>}{s === 'zerado' && <small> sem estoque</small>}</span>
                           : <span className="nome-sub">não controla</span>}

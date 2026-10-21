@@ -23,12 +23,12 @@ final class Estoque
         $p = Db::one('SELECT id, estoque, controla_estoque FROM produtos WHERE id = ? FOR UPDATE', [$produtoId])
             ?? throw new HttpError(404, 'Produto não encontrado.');
 
-        $novo = round((float)$p['estoque'] + $delta, 3);
+        $novo = round((float)$p['estoque'] + $delta, 4);
         Db::exec('UPDATE produtos SET estoque = ? WHERE id = ?', [$novo, $produtoId]);
         Db::exec(
             'INSERT INTO movimentacoes_estoque (produto_id, tipo, quantidade, estoque_apos, custo_unitario, motivo, venda_id, usuario_id)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            [$produtoId, $tipo, round($delta, 3), $novo, $custoUnitario, $motivo, $vendaId, $usuarioId]
+            [$produtoId, $tipo, round($delta, 4), $novo, $custoUnitario, $motivo, $vendaId, $usuarioId]
         );
         return $novo;
     }

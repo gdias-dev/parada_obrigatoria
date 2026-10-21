@@ -11,7 +11,8 @@ const UNIDADES = ['UN', 'KG', 'L', 'CX', 'PCT'];
  */
 const SQL_PRODUTO = 'SELECT p.*, c.nome AS categoria,
         b.nome AS base_nome, b.estoque AS base_estoque, b.preco_custo AS base_custo, b.unidade AS base_unidade,
-        b.controla_estoque AS base_controla, b.usa_casco AS base_usa_casco, b.valor_casco AS base_valor_casco
+        b.controla_estoque AS base_controla, b.usa_casco AS base_usa_casco, b.valor_casco AS base_valor_casco,
+        b.volume_ml AS base_volume_ml
     FROM produtos p
     LEFT JOIN categorias c ON c.id = p.categoria_id
     LEFT JOIN produtos b ON b.id = p.produto_base_id';
@@ -19,6 +20,20 @@ const SQL_PRODUTO = 'SELECT p.*, c.nome AS categoria,
 function ehEmbalagem(array $p): bool
 {
     return $p['produto_base_id'] !== null && (float)$p['fator'] > 0;
+}
+
+/** Dose de destilado: aponta para a garrafa e baixa uma fração dela (dose_ml / volume_ml). */
+function ehDose(array $p): bool
+{
+    return ehEmbalagem($p) && !empty($p['dose_ml']);
+}
+
+/** Recalcula a fração de garrafa de cada dose (depois de mudar o volume de uma garrafa ou o tamanho de uma dose). */
+function recalcularDoses(?int $garrafaId = null): void
+{
+    Db::exec('UPDATE produtos d JOIN produtos b ON b.id = d.produto_base_id
+              SET d.fator = ROUND(d.dose_ml / b.volume_ml, 6)
+              WHERE d.dose_ml IS NOT NULL AND b.volume_ml > 0' . ($garrafaId ? ' AND b.id = ' . (int)$garrafaId : ''));
 }
 
 /** Custo real: embalagem custa (custo da unidade × quantidade). */
@@ -54,7 +69,11 @@ function produtoOut(array $p): array
         'base_unidade'     => $emb ? $p['base_unidade'] : null,
         'base_estoque'     => $emb ? (float)$p['base_estoque'] : null,
         'base_controla'    => $emb ? (bool)$p['base_controla'] : null,
-        'estoque_embalagens' => $emb ? floor((float)$p['base_estoque'] / (float)$p['fator']) : null,
+        'estoque_embalagens' => $emb ? floor((float)$p['base_estoque'] / (float)$p['fator'] + 0.0001) : null,
+        // dose de destilado (fração da garrafa)
+        'dose_ml'          => $emb && $p['dose_ml'] ? (int)$p['dose_ml'] : null,
+        'volume_ml'        => $p['volume_ml'] !== null ? (int)$p['volume_ml'] : null,
+        'base_volume_ml'   => $emb && $p['base_volume_ml'] ? (int)$p['base_volume_ml'] : null,
         // casco retornável
         'usa_casco'        => (bool)$p['usa_casco'],
         'valor_casco'      => (float)$p['valor_casco'],
@@ -101,6 +120,20 @@ function validarBase(int $baseId, int $proprioId = 0): array
     return $b;
 }
 
+function volumeInformado(array $d, ?array $atual): ?int
+{
+    if (!array_key_exists('volume_ml', $d)) return $atual['volume_ml'] ?? null ? (int)$atual['volume_ml'] : null;
+    if ($d['volume_ml'] === null || $d['volume_ml'] === '') {
+        if ($atual && Db::value('SELECT 1 FROM produtos WHERE produto_base_id = ? AND dose_ml IS NOT NULL', [(int)$atual['id']])) {
+            throw new HttpError(422, 'Este produto tem doses ligadas a ele: informe o volume da garrafa.', ['campo' => 'volume_ml']);
+        }
+        return null;
+    }
+    $v = V::parseNumber($d['volume_ml']);
+    if ($v === null || $v < 50 || $v > 10000 || floor($v) != $v) throw new HttpError(422, 'Volume da garrafa inválido (em ml, ex.: 1000).', ['campo' => 'volume_ml']);
+    return (int)$v;
+}
+
 /** Lê e valida os campos do formulário de produto. */
 function dadosProduto(array $d, ?array $atual = null): array
 {
@@ -112,11 +145,29 @@ function dadosProduto(array $d, ?array $atual = null): array
 
     $baseId = !empty($d['produto_base_id']) ? (int)$d['produto_base_id'] : null;
     $fator = null;
+    $doseMl = null;
+    $volumeGarrafa = null;   // volume informado no cadastro da dose: é gravado na garrafa
     if ($baseId) {
         validarBase($baseId, (int)($atual['id'] ?? 0));
-        $fator = V::parseNumber($d['fator'] ?? null);
-        if ($fator === null || $fator < 2 || $fator > 10000 || floor($fator) != $fator) {
-            throw new HttpError(422, 'Informe quantas unidades vêm na embalagem (número inteiro, 2 ou mais).', ['campo' => 'fator']);
+        if (($d['tipo_embalagem'] ?? 'pacote') === 'dose') {
+            $doseMl = V::parseNumber($d['dose_ml'] ?? null);
+            if ($doseMl === null || $doseMl < 5 || $doseMl > 1000 || floor($doseMl) != $doseMl) {
+                throw new HttpError(422, 'Informe o tamanho da dose em ml (ex.: 50).', ['campo' => 'dose_ml']);
+            }
+            $volumeGarrafa = V::parseNumber($d['volume_ml'] ?? null)
+                ?? (float)(Db::value('SELECT volume_ml FROM produtos WHERE id = ?', [$baseId]) ?: 0);
+            if ($volumeGarrafa < 50 || $volumeGarrafa > 10000 || floor($volumeGarrafa) != $volumeGarrafa) {
+                throw new HttpError(422, 'Informe quantos ml tem a garrafa (ex.: 1000).', ['campo' => 'volume_ml']);
+            }
+            if ($doseMl >= $volumeGarrafa) throw new HttpError(422, 'A dose precisa ser menor que a garrafa.', ['campo' => 'dose_ml']);
+            $doseMl = (int)$doseMl;
+            $volumeGarrafa = (int)$volumeGarrafa;
+            $fator = round($doseMl / $volumeGarrafa, 6);
+        } else {
+            $fator = V::parseNumber($d['fator'] ?? null);
+            if ($fator === null || $fator < 2 || $fator > 10000 || floor($fator) != $fator) {
+                throw new HttpError(422, 'Informe quantas unidades vêm na embalagem (número inteiro, 2 ou mais).', ['campo' => 'fator']);
+            }
         }
     }
 
@@ -129,14 +180,19 @@ function dadosProduto(array $d, ?array $atual = null): array
         'categoria_id'     => $categoriaId,
         'produto_base_id'  => $baseId,
         'fator'            => $fator,
-        'unidade'          => V::enum($d, 'unidade', UNIDADES, $atual['unidade'] ?? ($baseId ? 'CX' : 'UN')),
+        'dose_ml'          => $doseMl,
+        '_volume_garrafa'  => $volumeGarrafa,
+        // volume da garrafa (destilados que também são vendidos em dose)
+        'volume_ml'        => $baseId ? null : volumeInformado($d, $atual),
+        'unidade'          => $doseMl ? 'UN' : V::enum($d, 'unidade', UNIDADES, $atual['unidade'] ?? ($baseId ? 'CX' : 'UN')),
         // embalagem não tem custo próprio: é calculado pela unidade
         'preco_custo'      => $baseId ? 0.0 : (V::money($d, 'preco_custo', false) ?? (float)($atual['preco_custo'] ?? 0)),
         'preco_venda'      => V::money($d, 'preco_venda'),
         'estoque_minimo'   => $baseId ? 0.0 : (V::money($d, 'estoque_minimo', false) ?? (float)($atual['estoque_minimo'] ?? 0)),
         // embalagem não tem estoque próprio: usa o da unidade
         'controla_estoque' => $baseId ? 0 : V::bool($d, 'controla_estoque', (bool)($atual['controla_estoque'] ?? true)),
-        'visivel_online'   => V::bool($d, 'visivel_online', (bool)($atual['visivel_online'] ?? true)),
+        // dose não aparece na loja online por padrão
+        'visivel_online'   => V::bool($d, 'visivel_online', (bool)($atual['visivel_online'] ?? !$doseMl)),
         'usa_casco'        => $usaCasco,
         'valor_casco'      => $valorCasco,
         'descricao'        => V::str($d, 'descricao', 255, false),
@@ -245,8 +301,8 @@ $r->get('/produtos/{id}', function (int $id) {
     Auth::user();
     $p = produtoOut(buscarProduto($id));
     // engradados ligados a esta unidade
-    $p['embalagens'] = array_map(fn($e) => ['id' => (int)$e['id'], 'nome' => $e['nome'], 'fator' => (float)$e['fator']],
-        Db::all('SELECT id, nome, fator FROM produtos WHERE produto_base_id = ? AND ativo = 1 ORDER BY fator', [$id]));
+    $p['embalagens'] = array_map(fn($e) => ['id' => (int)$e['id'], 'nome' => $e['nome'], 'fator' => (float)$e['fator'], 'dose_ml' => $e['dose_ml'] ? (int)$e['dose_ml'] : null],
+        Db::all('SELECT id, nome, fator, dose_ml FROM produtos WHERE produto_base_id = ? AND ativo = 1 ORDER BY fator', [$id]));
     return $p;
 });
 
@@ -255,6 +311,12 @@ $r->get('/produtos/{id}', function (int $id) {
 // ---------------------------------------------------------------------
 function gravarProduto(array $f, ?int $id = null): int
 {
+    $volume = $f['_volume_garrafa'] ?? null;
+    unset($f['_volume_garrafa']);
+    if ($volume && $f['produto_base_id']) {
+        Db::exec('UPDATE produtos SET volume_ml = ? WHERE id = ?', [$volume, $f['produto_base_id']]);
+        recalcularDoses((int)$f['produto_base_id']);
+    }
     $cols = array_keys($f);
     if ($id === null) {
         return Db::insert(
@@ -293,6 +355,7 @@ $r->put('/produtos/{id}', function (int $id) {
         throw new HttpError(422, 'Este produto tem estoque próprio. Zere o estoque dele (Contagem = 0) antes de transformá-lo em engradado.');
     }
     gravarProduto($f, $id);
+    recalcularDoses($id);
     return produtoOut(buscarProduto($id));
 });
 
@@ -323,10 +386,11 @@ $r->post('/produtos/{id}/estoque', function (int $id) {
     $prod = buscarProduto($id);
     $emb = ehEmbalagem($prod);
     if ($emb && $tipo === 'ajuste') throw new HttpError(422, "A contagem é feita na unidade (\"{$prod['base_nome']}\").");
+    if (ehDose($prod) && $tipo === 'entrada') throw new HttpError(422, "Dê entrada na garrafa (\"{$prod['base_nome']}\"), não na dose.");
 
     $qtd = V::parseNumber($d['quantidade'] ?? null);
     if ($qtd === null) throw new HttpError(422, 'Informe a quantidade.', ['campo' => 'quantidade']);
-    $qtd = round($qtd, 3);
+    $qtd = round($qtd, 4);
     if ($tipo === 'ajuste' ? $qtd < 0 : $qtd <= 0) throw new HttpError(422, 'Quantidade inválida.', ['campo' => 'quantidade']);
 
     $motivo = V::str($d, 'motivo', 255, $tipo !== 'entrada');
