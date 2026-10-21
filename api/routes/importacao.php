@@ -53,18 +53,24 @@ function analisarImportacao(array $linhas, string $modoEstoque): array
     $plano = [];
 
     // códigos de unidades que estão na própria planilha (para engradados apontarem para elas)
-    $unidadesNaPlanilha = [];
-    $volumeNaPlanilha = [];   // volume (ml) das garrafas informado na própria planilha
-    foreach ($linhas as $l) {
-        try {
-            $c = normalizarCodigo($l['codigo'] ?? null);
-            if ($c !== null && textoPlanilha($l['embalagem_de'] ?? null) === null) {
-                $unidadesNaPlanilha[$c] = true;
-                $v = $l['volume_ml'] ?? null;
-                if ($v !== null && $v !== '' && is_numeric(str_replace(',', '.', (string)$v))) $volumeNaPlanilha[$c] = (int)round((float)str_replace(',', '.', (string)$v));
-            }
-        } catch (HttpError) {}
+    // Unidades/garrafas que estão na própria planilha (engradados e doses podem apontar para elas
+    // pelo código de barras OU pelo nome). Chave: 'c:<código>' ou 'n:<nome em minúsculas>'.
+    $basesNaPlanilha = [];    // chave => índice da linha
+    $volumeNaPlanilha = [];   // chave => volume (ml) da garrafa
+    foreach ($linhas as $i => $l) {
+        if (textoPlanilha($l['embalagem_de'] ?? null) !== null) continue;
+        $chaves = [];
+        try { $c = normalizarCodigo($l['codigo'] ?? null); if ($c !== null) $chaves[] = "c:$c"; } catch (HttpError) {}
+        $n = textoPlanilha($l['nome'] ?? null);
+        if ($n !== null) $chaves[] = 'n:' . mb_strtolower($n);
+        $v = $l['volume_ml'] ?? null;
+        $vol = ($v !== null && $v !== '' && is_numeric(str_replace(',', '.', (string)$v))) ? (int)round((float)str_replace(',', '.', (string)$v)) : null;
+        foreach ($chaves as $k) {
+            $basesNaPlanilha[$k] ??= $i;
+            if ($vol) $volumeNaPlanilha[$k] = $vol;
+        }
     }
+    $refBase = [];   // índice da linha => chave da base que ela usa (para checar erros na base depois)
 
     foreach ($linhas as $i => $l) {
         $num = (int)($l['linha'] ?? $i + 2);
@@ -96,16 +102,34 @@ function analisarImportacao(array $linhas, string $modoEstoque): array
         if ($volume !== null && ($volume < 50 || $volume > 10000 || floor($volume) != $volume)) { $erros[] = 'Volume da garrafa: número inteiro em ml (ex.: 1000)'; $volume = null; }
 
         // Engradado / fardo / pack, ou dose de destilado
-        $embDe = null; $fatorEmb = null; $doseMl = null;
-        try { $embDe = normalizarCodigo($l['embalagem_de'] ?? null); } catch (HttpError $e) { $erros[] = 'Código da unidade inválido'; }
+        $embDe = null; $fatorEmb = null; $doseMl = null; $embNome = null; $baseExistente = null; $baseChave = null;
+        $embTexto = textoPlanilha($l['embalagem_de'] ?? null);
+        if ($embTexto !== null) {
+            // código de barras (no sistema ou na planilha) ou, se não for, o nome da unidade/garrafa
+            $cod = null;
+            try { $cod = normalizarCodigo($embTexto); } catch (HttpError) {}
+            if ($cod !== null && (isset($porCodigo[$cod]) || isset($basesNaPlanilha["c:$cod"]))) {
+                $embDe = $cod;
+                $baseExistente = $porCodigo[$cod] ?? null;
+                $baseChave = "c:$cod";
+            } else {
+                $embNome = $embTexto;
+                $embDe = $embTexto;
+                $iguais = $porNome[mb_strtolower($embTexto)] ?? [];
+                if (count($iguais) > 1) $erros[] = "Existe mais de um produto chamado \"$embTexto\"; use o código de barras";
+                $baseExistente = count($iguais) === 1 ? $iguais[0] : null;
+                $baseChave = 'n:' . mb_strtolower($embTexto);
+            }
+        }
         if ($embDe !== null) {
+            $rotuloBase = $embNome !== null ? "\"$embNome\"" : "código $embDe";
             $doseMl = numeroPlanilha($l['dose_ml'] ?? null, 'Dose (ml)', $erros);
             if ($doseMl !== null) {
                 // dose: a fração da garrafa vem de dose ÷ volume da garrafa
-                $volGarrafa = $volumeNaPlanilha[$embDe] ?? (int)($porCodigo[$embDe]['volume_ml'] ?? 0);
+                $volGarrafa = $volumeNaPlanilha[$baseChave] ?? (int)($baseExistente['volume_ml'] ?? 0);
                 if ($doseMl < 5 || $doseMl > 1000 || floor($doseMl) != $doseMl) $erros[] = 'Dose (ml): número inteiro (ex.: 50)';
-                elseif (!isset($porCodigo[$embDe]) && !isset($unidadesNaPlanilha[$embDe])) {}   // erro de garrafa não encontrada sai abaixo
-                elseif ($volGarrafa <= 0) $erros[] = "Informe o \"Volume da garrafa (ml)\" na linha da garrafa $embDe";
+                elseif (!$baseExistente && !isset($basesNaPlanilha[$baseChave])) {}   // erro de garrafa não encontrada sai abaixo
+                elseif ($volGarrafa <= 0) $erros[] = "Informe o \"Volume da garrafa (ml)\" na linha da garrafa $rotuloBase";
                 elseif ($doseMl >= $volGarrafa) $erros[] = 'A dose precisa ser menor que a garrafa';
                 else $fatorEmb = round($doseMl / $volGarrafa, 6);
                 $volume = null;
@@ -114,12 +138,14 @@ function analisarImportacao(array $linhas, string $modoEstoque): array
                 $fatorEmb = numeroPlanilha($l['qtd_embalagem'] ?? null, 'Qtd no engradado', $erros);
                 if ($fatorEmb === null || $fatorEmb < 2 || floor($fatorEmb) != $fatorEmb) $erros[] = 'Informe a "Qtd no engradado" (número inteiro, 2 ou mais) ou a "Dose (ml)"';
             }
-            if ($embDe === $codigo) $erros[] = 'A embalagem não pode apontar para ela mesma';
-            elseif (isset($porCodigo[$embDe])) {
-                if ($porCodigo[$embDe]['produto_base_id'] !== null) $erros[] = "O código $embDe já é de um engradado, não de uma unidade";
-            } elseif (!isset($unidadesNaPlanilha[$embDe])) {
-                $erros[] = "Unidade com código $embDe não encontrada (cadastre a unidade antes ou na mesma planilha)";
+            if (($embNome === null && $embDe === $codigo) || ($embNome !== null && $nome !== null && mb_strtolower($embNome) === mb_strtolower($nome))) {
+                $erros[] = 'A embalagem não pode apontar para ela mesma';
+            } elseif ($baseExistente) {
+                if ($baseExistente['produto_base_id'] !== null) $erros[] = "$rotuloBase já é um engradado ou dose, não uma unidade";
+            } elseif (!isset($basesNaPlanilha[$baseChave])) {
+                $erros[] = "Não achei a unidade/garrafa $rotuloBase (use o código de barras ou o nome igual ao do cadastro)";
             }
+            if (isset($basesNaPlanilha[$baseChave])) $refBase[$i] = $basesNaPlanilha[$baseChave];
             if ($estoque !== null) { $avisos[] = 'Engradado não tem estoque próprio: o estoque fica na unidade (coluna ignorada)'; $estoque = null; }
             if ($custo !== null) { $avisos[] = ($doseMl ? 'Custo da dose é calculado pela garrafa' : 'Custo do engradado é calculado pela unidade') . ' (coluna ignorada)'; $custo = null; }
             if ($minimo !== null) $minimo = null;
@@ -189,7 +215,7 @@ function analisarImportacao(array $linhas, string $modoEstoque): array
             if ($unidade !== null && $unidade !== $existente['unidade']) $mudancas[] = 'unidade';
             if (!$existente['ativo']) $mudancas[] = 'reativado';
             if ($volume !== null && (int)$existente['volume_ml'] !== (int)$volume) $mudancas[] = 'volume';
-            if ($embDe !== null && ((int)$existente['produto_base_id'] !== (int)($porCodigo[$embDe]['id'] ?? -1) || abs((float)$existente['fator'] - (float)$fatorEmb) > 0.0000005 || (int)$existente['dose_ml'] !== (int)$doseMl)) {
+            if ($embDe !== null && ((int)$existente['produto_base_id'] !== (int)($baseExistente['id'] ?? -1) || abs((float)$existente['fator'] - (float)$fatorEmb) > 0.0000005 || (int)$existente['dose_ml'] !== (int)$doseMl)) {
                 $mudancas[] = $doseMl ? 'dose' : 'engradado';
                 if ($existente['produto_base_id'] === null && abs((float)$existente['estoque']) > 0.0005) {
                     $erros[] = 'Produto tem estoque próprio; zere o estoque antes de transformá-lo em engradado';
@@ -219,10 +245,19 @@ function analisarImportacao(array $linhas, string $modoEstoque): array
             'trocar_nome'    => $existente && $nome !== null && $codigo !== null,
             'controla'       => $existente ? null : ($estoque !== null && $embDe === null),
             'emb_de'         => $embDe,
+            'emb_nome'       => $embNome,
             'emb_fator'      => $fatorEmb,
             'dose_ml'        => $doseMl,
             'volume_ml'      => $volume,
         ];
+    }
+    // Engradado/dose cuja unidade/garrafa (na planilha) está com erro também não pode entrar
+    foreach ($refBase as $i => $iBase) {
+        if ($i !== $iBase && $plano[$iBase]['acao'] === 'erro' && $plano[$i]['acao'] !== 'erro') {
+            $plano[$i]['acao'] = 'erro';
+            $plano[$i]['avisos'] = [];
+            $plano[$i]['erros'][] = "A unidade/garrafa desta linha (linha {$plano[$iBase]['linha']}) está com erro: corrija ela primeiro";
+        }
     }
     return $plano;
 }
@@ -262,8 +297,13 @@ $r->post('/produtos/importar', function () {
         usort($plano, fn($a, $b) => ($a['emb_de'] !== null) <=> ($b['emb_de'] !== null));
         foreach ($plano as $p) {
             if ($p['acao'] === 'erro' || $p['acao'] === 'igual') continue;
-            $baseId = $p['emb_de'] !== null ? (int)Db::value('SELECT id FROM produtos WHERE codigo_barras = ?', [$p['emb_de']]) : null;
-            if ($p['emb_de'] !== null && !$baseId) continue;
+            $baseId = null;
+            if ($p['emb_de'] !== null) {
+                $baseId = $p['emb_nome'] !== null
+                    ? (int)Db::value('SELECT id FROM produtos WHERE nome = ? AND produto_base_id IS NULL ORDER BY ativo DESC, id LIMIT 1', [$p['emb_nome']])
+                    : (int)Db::value('SELECT id FROM produtos WHERE codigo_barras = ?', [$p['emb_de']]);
+                if (!$baseId) continue;
+            }
 
             $catId = null;
             if ($p['categoria'] !== null) {
@@ -322,12 +362,12 @@ $r->get('/produtos/exportar', function () {
         'venda'     => (float)$p['preco_venda'],
         'estoque'   => $p['produto_base_id'] ? null : (float)$p['estoque'],
         'minimo'    => $p['produto_base_id'] ? null : (float)$p['estoque_minimo'],
-        'embalagem_de'  => $p['base_codigo'],
+        'embalagem_de'  => $p['base_codigo'] ?? $p['base_nome'],
         'qtd_embalagem' => $p['produto_base_id'] && !$p['dose_ml'] ? (float)$p['fator'] : null,
         'volume_ml' => $p['volume_ml'] !== null ? (int)$p['volume_ml'] : null,
         'dose_ml'   => $p['dose_ml'] !== null ? (int)$p['dose_ml'] : null,
     ], Db::all(
-        'SELECT p.*, c.nome AS categoria, b.codigo_barras AS base_codigo FROM produtos p
+        'SELECT p.*, c.nome AS categoria, b.codigo_barras AS base_codigo, b.nome AS base_nome FROM produtos p
          LEFT JOIN categorias c ON c.id = p.categoria_id LEFT JOIN produtos b ON b.id = p.produto_base_id
          WHERE p.ativo = 1 ORDER BY c.ordem, c.nome, p.produto_base_id IS NOT NULL, p.nome'
     ));

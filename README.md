@@ -281,7 +281,7 @@ O manual de uso para a loja está no documento "Manual do sistema Parada Obrigat
 - `fator` da dose = `dose_ml / volume_ml` (6 casas). Vender 1 dose baixa essa fração da garrafa; custo = custo da garrafa × fator.
 - Estoque com 4 casas decimais (garrafa aberta). Mudar o volume da garrafa recalcula todas as doses dela.
 - Dose não aceita entrada (é na garrafa); aceita saída (cortesia, derramou). Por padrão não aparece online.
-- Planilha: colunas "Volume da garrafa (ml)" e "Dose (ml)"; a coluna "Engradado ou dose de" recebe o código da garrafa.
+- Planilha: colunas "Volume da garrafa (ml)" e "Dose (ml)"; a coluna "Engradado ou dose de" recebe o código de barras OU o nome da garrafa/unidade.
 
 ## Mensalidade do sistema (cobrança do desenvolvedor)
 
