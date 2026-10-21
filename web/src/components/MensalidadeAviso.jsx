@@ -32,7 +32,7 @@ export default function MensalidadeAviso({ m, onAtualizar }) {
     setEnviando(true)
     try {
       await post(`/mensalidade/${m.id}/paguei`)
-      toast('Obrigado! O pagamento foi informado.')
+      toast('Obrigado! Mensalidade registrada como paga.')
       onAtualizar?.()
     } catch (e) { toast(e.message, 'erro') } finally { setEnviando(false) }
   }

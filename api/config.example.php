@@ -25,21 +25,13 @@ return [
     // Em desenvolvimento: ['http://localhost:5173']
     'cors_origins' => [],
 
-    // Área do desenvolvedor (histórico das mensalidades): https://seudominio/api/mensalidade/dev?chave=ESTA-CHAVE
-    // Use uma chave longa e aleatória e não passe para ninguém.
-    'desenvolvedor_chave' => 'TROQUE-POR-OUTRA-CHAVE-ALEATORIA',
+    // OPCIONAL — área do desenvolvedor (histórico das mensalidades, desfazer um "já paguei"):
+    // https://seudominio/api/mensalidade/dev?chave=ESTA-CHAVE
+    // 'desenvolvedor_chave' => 'uma-chave-longa-so-sua',
 
-    // E-mails da mensalidade (avisos de "já paguei" e de atraso).
-    // Recomendado: Gmail com "senha de app" (Conta Google > Segurança > Verificação em duas etapas > Senhas de app).
-    'email' => [
-        'smtp' => [
-            'host'      => 'smtp.gmail.com',
-            'porta'     => 465,
-            'seguranca' => 'ssl',
-            'usuario'   => 'companynastech@gmail.com',
-            'senha'     => 'SENHA-DE-APP-DE-16-LETRAS',
-        ],
-    ],
+    // OPCIONAL — receber e-mail quando a loja tocar em "Já paguei" e quando atrasar:
+    // 'email' => ['smtp' => ['host' => 'smtp.gmail.com', 'porta' => 465, 'seguranca' => 'ssl',
+    //                        'usuario' => 'avisos@gmail.com', 'senha' => 'senha-de-app']],
 
     // Mensalidade: só preencha para mudar o padrão (R$ 100, dia 8, desde nov/2026, Pix CNPJ da Nasctech)
     // 'mensalidade' => ['valor' => 100.00, 'dia_vencimento' => 8],

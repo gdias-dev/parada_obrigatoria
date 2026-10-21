@@ -5,9 +5,10 @@ declare(strict_types=1);
  * Mensalidade do sistema (cobrança do desenvolvedor para a loja).
  *
  * - Todo mês, a partir do dia 1, aparece para o administrador da loja um aviso com o Pix (QR Code e copia e cola).
- * - Vence no dia 8. A loja paga e toca em "Já paguei": o desenvolvedor recebe um e-mail com os botões
- *   "Confirmar recebimento" e "Não recebi".
- * - Depois do vencimento, o aviso fica mais forte e o desenvolvedor recebe UM e-mail de atraso. O sistema NUNCA trava.
+ * - Vence no dia 8. A loja paga e toca em "Já paguei": o mês fica pago e o aviso some.
+ * - Depois do vencimento, o aviso fica vermelho. O sistema NUNCA trava.
+ * - Opcional: com o bloco 'email' no config.php, o desenvolvedor recebe e-mail de "já paguei" e de atraso;
+ *   com 'desenvolvedor_chave', tem uma página com o histórico para desfazer um "já paguei" que não caiu.
  *
  * Os dados abaixo podem ser trocados no config.php (chave 'mensalidade'), sem mexer no código.
  */
@@ -139,7 +140,7 @@ final class Mensalidade
         $m = Db::one('SELECT * FROM mensalidades WHERE id = ?', [$id]) ?? throw new HttpError(404, 'Mensalidade não encontrada.');
         if ($m['status'] === 'paga') throw new HttpError(409, 'Esta mensalidade já está paga.');
         if ($m['status'] === 'aberta') {
-            Db::exec("UPDATE mensalidades SET status = 'informada', informada_em = NOW(), informada_por = ?, observacao = NULL WHERE id = ?", [$usuario['id'], $id]);
+            Db::exec("UPDATE mensalidades SET status = 'paga', informada_em = NOW(), informada_por = ?, paga_em = NOW(), observacao = NULL WHERE id = ?", [$usuario['id'], $id]);
             $m = Db::one('SELECT * FROM mensalidades WHERE id = ?', [$id]);
             self::emailInformada($m, $usuario);
         }
@@ -247,14 +248,11 @@ final class Mensalidade
         $mes = self::nomeMes($m['competencia']);
         $valor = 'R$ ' . number_format((float)$m['valor'], 2, ',', '.');
         $quem = htmlspecialchars($u['nome'] ?? 'Administrador');
-        $ok = self::link((int)$m['id'], 'paga');
         $nao = self::link((int)$m['id'], 'aberta');
         self::enviar("[$loja] Pagamento informado — mensalidade de $mes", "
             <p><b>$quem</b> informou o pagamento da mensalidade de <b>$mes</b> ($valor) às " . date('H:i \d\e d/m/Y') . ".</p>
-            <p>Confira no seu banco se o Pix de $valor caiu (identificador <b>PARADA" . str_replace('-', '', $m['competencia']) . "</b>) e toque em um botão:</p>
-            <p><a href=\"$ok\" style=\"display:inline-block;background:#2e7a4c;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold\">Confirmar recebimento</a>
-               &nbsp; <a href=\"$nao\" style=\"display:inline-block;background:#b3261e;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold\">Não recebi</a></p>
-            <p style=\"color:#666;font-size:13px\">Enquanto você não confirmar, a loja vê \"aguardando confirmação\". Se tocar em \"Não recebi\", o aviso de pagamento volta a aparecer para ela.</p>");
+            <p>O mês já aparece como pago para a loja. Confira no seu banco se o Pix de $valor caiu (identificador <b>PARADA" . str_replace('-', '', $m['competencia']) . "</b>).</p>
+            <p>Se não caiu: <a href=\"$nao\" style=\"display:inline-block;background:#b3261e;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:bold\">Não recebi — voltar o aviso para a loja</a></p>");
     }
 
     private static function emailAtraso(array $m): void
@@ -277,8 +275,9 @@ final class Mensalidade
         $para ??= (string)self::$cfg['email_dev'];
         $corpo = "<div style=\"font-family:Arial,sans-serif;font-size:15px;color:#24180f;max-width:560px\">$html
             <hr style=\"border:0;border-top:1px solid #ddd\"><p style=\"color:#999;font-size:12px\">Aviso automático do sistema da loja.</p></div>";
+        $smtp = self::$email['smtp'] ?? null;
+        if (!$smtp && empty(self::$email['usar_mail'])) return false;   // e-mail é opcional: sem configuração, não envia nada
         try {
-            $smtp = self::$email['smtp'] ?? null;
             $ok = $smtp ? Email::smtp($smtp, $para, $assunto, $corpo)
                         : Email::mail((string)(self::$email['remetente'] ?? ''), $para, $assunto, $corpo);
             if (!$ok) error_log('[parada] e-mail da mensalidade não enviado: ' . $assunto);

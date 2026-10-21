@@ -289,20 +289,9 @@ O manual de uso para a loja está no documento "Manual do sistema Parada Obrigat
   Os padrões ficam em `api/src/Mensalidade.php`; para mudar sem mexer no código, use `'mensalidade' => [...]` no `config.php`.
 - Do dia 1 até o pagamento, a tela inicial do **administrador** mostra o aviso com QR Code e Pix copia e cola
   (o código segue o padrão BR Code do Banco Central, com o identificador `PARADAAAAAMM`). Funcionário não vê.
-- "Já paguei" → e-mail para o desenvolvedor com **Confirmar recebimento** / **Não recebi** (links assinados).
-- Depois do vencimento: o aviso fica vermelho e o desenvolvedor recebe **um** e-mail de atraso. O sistema nunca trava.
-- Histórico: Dados da loja → Mensalidade do sistema. Área do desenvolvedor: `/api/mensalidade/dev?chave=<desenvolvedor_chave>`.
-- A tabela `mensalidades` é criada sozinha (não precisa de SQL).
-
-### Configurar no servidor (uma vez), no `api/config.php`
-```php
-'desenvolvedor_chave' => 'uma-chave-longa-so-sua',
-'email' => [
-    'smtp' => [
-        'host' => 'smtp.gmail.com', 'porta' => 465, 'seguranca' => 'ssl',
-        'usuario' => 'companynastech@gmail.com',
-        'senha' => 'senha-de-app-do-google',   // Conta Google > Segurança > Senhas de app
-    ],
-],
-```
-Sem o bloco `email`, o sistema tenta o `mail()` da hospedagem (pode não chegar).
+- "Já paguei" → o mês fica pago e o aviso some (sem confirmação). Depois do vencimento o aviso fica vermelho.
+  O sistema nunca trava.
+- Histórico: Dados da loja → Mensalidade do sistema. A tabela `mensalidades` é criada sozinha (não precisa de SQL).
+- Nada precisa ser configurado. Opcionais no `config.php` (ver `config.example.php`):
+  - `desenvolvedor_chave` → página `/api/mensalidade/dev?chave=...` com o histórico e o botão para desfazer um "já paguei";
+  - `email` (SMTP) → e-mail para o desenvolvedor no "já paguei" e no atraso.
