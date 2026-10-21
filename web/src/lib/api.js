@@ -46,3 +46,22 @@ export const get = (p, o) => api(p, o)
 export const post = (p, body) => api(p, { method: 'POST', body })
 export const put = (p, body) => api(p, { method: 'PUT', body })
 export const del = (p) => api(p, { method: 'DELETE' })
+
+/** Baixa um arquivo da API (com o login) e salva no aparelho. */
+export async function baixarArquivo(path, nomePadrao) {
+  const res = await fetch(`/api${path}`, { headers: { Authorization: `Bearer ${tokenStore.get()}` } }).catch(() => null)
+  if (!res) throw new ApiError(0, { erro: 'Sem conexão com o servidor. Verifique a internet.' })
+  if (!res.ok) {
+    let data = null
+    try { data = await res.json() } catch {}
+    if (res.status === 401) onUnauthorized()
+    throw new ApiError(res.status, data)
+  }
+  const nome = /filename="([^"]+)"/.exec(res.headers.get('Content-Disposition') || '')?.[1] || nomePadrao
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  const a = Object.assign(document.createElement('a'), { href: url, download: nome })
+  document.body.appendChild(a); a.click(); a.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 2000)
+  return { nome, tamanho: blob.size }
+}

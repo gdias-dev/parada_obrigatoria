@@ -903,7 +903,7 @@ textarea.input { padding: 10px 14px; min-height: 72px; resize: vertical; }
 .rel-periodo span { color: var(--texto-3); }
 
 .rel-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
-.rel-kpis > div { display: grid; gap: 4px; align-content: start; padding: 16px 18px; background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--r-lg); min-width: 0; }
+.rel-kpis > * { display: grid; gap: 4px; align-content: start; padding: 16px 18px; background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--r-lg); min-width: 0; }
 .rel-kpis span { color: var(--texto-2); font-size: .875rem; }
 .rel-kpis strong { font-family: var(--fonte-titulo); font-size: 2rem; line-height: 1.05; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .rel-kpis .destaque { background: var(--barril); border-color: var(--barril); }
@@ -984,7 +984,7 @@ textarea.input { padding: 10px 14px; min-height: 72px; resize: vertical; }
 }
 @media (max-width: 760px) {
   .rel-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-  .rel-kpis > div { padding: 12px; }
+  .rel-kpis > * { padding: 12px; }
   .rel-kpis strong { font-size: 1.45rem; }
   .rel-mini { grid-template-columns: minmax(0, 1fr); }
   .rel-prod-filtros .busca .input { width: 100%; }
@@ -1011,7 +1011,7 @@ textarea.input { padding: 10px 14px; min-height: 72px; resize: vertical; }
   .so-impressao { display: block !important; }
   .aba-oculta { display: block !important; }
   .relatorio { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .rel-kpis > div, .rel-dre, .rel-serie, .relatorio tr { break-inside: avoid; }
+  .rel-kpis > *, .rel-dre, .rel-serie, .relatorio tr { break-inside: avoid; }
   .relatorio .tabela tr.linha-extra { display: table-row !important; }
   .rel-kpis strong { font-size: 1.35rem !important; white-space: nowrap; }
   .relatorio .pagina-topo p { display: none; }
@@ -1023,4 +1023,33 @@ textarea.input { padding: 10px 14px; min-height: 72px; resize: vertical; }
   .rel-kpis .destaque small { color: #555 !important; }
   .rel-cab-impressao { margin: 0 0 12px; font-size: 13px; }
   .graf-dica { display: none !important; }
+}
+
+/* ===================== Início (etapa 7) ===================== */
+.inicio-avisos { list-style: none; margin: -12px 0 20px; padding: 0; display: grid; gap: 8px; }
+.inicio-avisos a { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: var(--r); background: var(--aviso-fundo); color: var(--aviso); text-decoration: none; font-weight: 600; font-size: .92rem; }
+.inicio-avisos a span { flex: 1; }
+.inicio-avisos a.forte { background: var(--erro); color: #fff; }
+.inicio-kpis a { text-decoration: none; color: inherit; transition: border-color .15s; }
+.inicio-kpis a:hover { border-color: var(--chope-forte); }
+.inicio-listas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.inicio-lista { list-style: none; margin: 0; padding: 4px 0; }
+.inicio-lista a { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 20px; text-decoration: none; color: inherit; border-bottom: 1px solid var(--linha); }
+.inicio-lista li:last-child a { border-bottom: 0; }
+.inicio-lista a:hover { background: var(--fundo); }
+.inicio-lista span { min-width: 0; }
+.inicio-lista small { display: block; color: var(--texto-3); font-size: .78rem; }
+.inicio-lista b { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.inicio-lista .mais-itens { padding: 8px 20px; color: var(--texto-3); font-size: .85rem; }
+.aviso-txt { color: var(--aviso); }
+.info-sistema { margin: 4px 0 0; display: grid; gap: 6px; font-size: .88rem; }
+.info-sistema div { display: flex; gap: 12px; justify-content: space-between; border-bottom: 1px dashed var(--linha); padding-bottom: 6px; flex-wrap: wrap; }
+.info-sistema dt { color: var(--texto-3); }
+.info-sistema dd { margin: 0; text-align: right; }
+.banner-versao { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 90; display: flex; align-items: center; gap: 12px; background: var(--barril); color: var(--rotulo); padding: 10px 10px 10px 16px; border-radius: 999px; box-shadow: var(--sombra-modal); font-size: .9rem; max-width: calc(100vw - 24px); }
+.banner-versao .btn { min-height: 36px; padding: 4px 14px; }
+@media (max-width: 760px) {
+  .inicio-listas { grid-template-columns: minmax(0, 1fr); }
+  .inicio-lista a { padding: 10px 14px; }
+  .banner-versao { bottom: 76px; }
 }

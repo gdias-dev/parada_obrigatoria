@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Copy, Trash2 } from 'lucide-react'
-import { del, get, post, put } from '../lib/api'
+import { Copy, DatabaseBackup, Trash2 } from 'lucide-react'
+import { baixarArquivo, del, get, post, put } from '../lib/api'
 import { dinheiro, paraCampo } from '../lib/format'
 import { Alerta, Botao, Campo, InputDinheiro, useToast } from '../components/ui'
 
@@ -69,6 +69,7 @@ export default function Loja() {
         </form>
       )}
       <Bairros />
+      <SistemaBackup />
     </div>
   )
 }
@@ -118,6 +119,50 @@ function Bairros() {
         </ul>
       )}
       {lista.length > 0 && <p className="dica">{lista.filter((b) => b.ativo).length} bairros atendidos · taxas de {dinheiro(Math.min(...lista.map((b) => b.taxa)))} a {dinheiro(Math.max(...lista.map((b) => b.taxa)))}</p>}
+    </section>
+  )
+}
+
+function SistemaBackup() {
+  const toast = useToast()
+  const [info, setInfo] = useState(null)
+  const [baixando, setBaixando] = useState(false)
+  const carregar = () => get('/sistema/info').then(setInfo).catch(() => {})
+  useEffect(() => { carregar() }, [])
+
+  async function backup() {
+    setBaixando(true)
+    try {
+      const r = await baixarArquivo('/backup', 'backup-parada.sql')
+      toast(`Backup salvo: ${r.nome}`)
+      carregar()
+    } catch (e) { toast(e.message, 'erro') } finally { setBaixando(false) }
+  }
+
+  const quando = info?.ultimo_backup ? new Date(info.ultimo_backup.replace(' ', 'T')) : null
+  const dias = quando ? Math.floor((Date.now() - quando) / 86400000) : null
+  return (
+    <section className="painel painel-corpo grid-form" style={{ maxWidth: 720, marginTop: 16 }}>
+      <h2>Backup e sistema</h2>
+      <p className="dica">
+        O backup é uma cópia de tudo (produtos, vendas, clientes, fiado, usuários). Baixe toda semana e guarde no Google Drive
+        ou num pendrive. Se um dia precisar voltar, o arquivo é importado no phpMyAdmin.
+      </p>
+      {info && (
+        <Alerta tipo={dias === null || dias > 7 ? 'aviso' : 'ok'}>
+          {quando ? `Último backup: ${quando.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })} (${dias === 0 ? 'hoje' : dias === 1 ? 'ontem' : `há ${dias} dias`}).` : 'Nenhum backup feito ainda.'}
+        </Alerta>
+      )}
+      <div><Botao onClick={backup} carregando={baixando}><DatabaseBackup size={18} aria-hidden /> {baixando ? 'Gerando…' : 'Baixar backup agora'}</Botao></div>
+      {info && (
+        <dl className="info-sistema">
+          <div><dt>Versão do sistema</dt><dd>{info.versao_sistema} · app {__VERSAO_APP__}</dd></div>
+          <div><dt>Banco de dados</dt><dd>versão {info.versao_banco}{info.versao_banco < info.versao_banco_esperada && <b className="negativo"> — falta importar atualização</b>}</dd></div>
+          <div><dt>Servidor</dt><dd>PHP {info.php} · MySQL {info.mysql.split('-')[0]}</dd></div>
+          <div><dt>Hora do servidor</dt><dd>{info.hora_servidor.slice(11, 16)}</dd></div>
+          <div><dt>Cadastros</dt><dd>{info.contagens.produtos} produtos · {info.contagens.clientes} clientes · {info.contagens.usuarios} usuários · {info.contagens.vendas} vendas</dd></div>
+        </dl>
+      )}
     </section>
   )
 }

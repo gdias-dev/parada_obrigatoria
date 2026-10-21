@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Plus, Search, FileSpreadsheet, Download, Tags, PackagePlus, Pencil, X } from 'lucide-react'
 import { get } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
@@ -33,7 +33,8 @@ export default function Produtos() {
   const [busca, setBusca] = useState('')
   const [buscaAplicada, setBuscaAplicada] = useState('')
   const [categoria, setCategoria] = useState('')
-  const [status, setStatus] = useState('ativos')
+  const [params] = useSearchParams()
+  const [status, setStatus] = useState(() => (FILTROS.some(([v]) => v === params.get('status')) ? params.get('status') : 'ativos'))
   const [ordem, setOrdem] = useState('nome')
   const [dados, setDados] = useState({ total: 0, itens: [] })
   const [carregando, setCarregando] = useState(true)

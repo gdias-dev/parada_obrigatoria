@@ -16,7 +16,7 @@ import Login from './pages/Login'
 import Inicio from './pages/Inicio'
 import Usuarios from './pages/Usuarios'
 import Loja from './pages/Loja'
-import EmBreve from './pages/EmBreve'
+import AtualizacaoApp from './components/AtualizacaoApp'
 import Produtos from './pages/produtos/Produtos'
 import Importar from './pages/produtos/Importar'
 import Pdv from './pages/Pdv'
@@ -32,7 +32,6 @@ import Relatorios from './pages/Relatorios'
 import LojaOnline from './pages/publico/LojaOnline'
 import Acompanhar from './pages/publico/Acompanhar'
 import { PedidosAlertaProvider } from './lib/pedidosAlerta'
-import { todosItens } from './menu'
 
 function Rotas() {
   const { usuario, carregando, isAdmin } = useAuth()
@@ -74,9 +73,6 @@ function Rotas() {
         <Route path="entregas" element={<Entregas />} />
         <Route path="entregadores" element={soAdmin(<Entregadores />)} />
         <Route path="relatorios" element={soAdmin(<Relatorios />)} />
-        {todosItens.filter((i) => !i.pronto).map((i) => (
-          <Route key={i.para} path={i.para.slice(1)} element={i.admin ? soAdmin(<EmBreve item={i} />) : <EmBreve item={i} />} />
-        ))}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
@@ -91,6 +87,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <ToastProvider>
         <AuthProvider>
           <Rotas />
+          <AtualizacaoApp />
         </AuthProvider>
       </ToastProvider>
     </BrowserRouter>
@@ -98,6 +95,24 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 )
 
 // App instalável (PC e celular)
+// Quando sobe uma versão nova no servidor, o app mostra "Atualizar" (sem precisar reinstalar).
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}))
+  window.addEventListener('load', async () => {
+    try {
+      const reg = await navigator.serviceWorker.register('/sw.js')
+      const avisar = () => reg.waiting && navigator.serviceWorker.controller && window.dispatchEvent(new CustomEvent('app-atualizacao', { detail: reg }))
+      avisar()
+      reg.addEventListener('updatefound', () => {
+        const novo = reg.installing
+        novo?.addEventListener('statechange', () => novo.state === 'installed' && avisar())
+      })
+      // procura versão nova a cada 30 min e quando o app volta para a tela
+      setInterval(() => reg.update().catch(() => {}), 30 * 60 * 1000)
+      document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && reg.update().catch(() => {}))
+      // recarrega só quando é troca de versão (na 1ª instalação não há o que recarregar)
+      const tinhaVersao = !!navigator.serviceWorker.controller
+      let recarregou = false
+      navigator.serviceWorker.addEventListener('controllerchange', () => { if (tinhaVersao && !recarregou) { recarregou = true; location.reload() } })
+    } catch {}
+  })
 }

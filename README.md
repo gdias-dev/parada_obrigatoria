@@ -17,7 +17,7 @@ para o **Parada Obrigatória — Bar e Distribuidora de Bebidas**.
 | 4 | Clientes, fiado e formas de pagamento | ✅ Pronta |
 | 5 | Pedidos online e entregas | ✅ Pronta |
 | 6 | Relatórios financeiros | ✅ Pronta |
-| 7 | Publicação final e instalação nos aparelhos | Próxima |
+| 7 | Publicação final, painel inicial, backup e instalação nos aparelhos | ✅ Pronta |
 
 O banco (`database/schema.sql`) já tem as tabelas de **todas** as etapas.
 
@@ -90,7 +90,28 @@ Teste rápido: `https://seudominio/api/health` deve responder `{"ok":true,...}`.
 - **iPhone (Safari):** botão compartilhar → "Adicionar à Tela de Início".
 
 ### Backup
-Painel KingHost → Bancos de Dados → exportar (ou agendar backup). Recomendado: semanal.
+- Pelo sistema: **Dados da loja → Backup e sistema → Baixar backup agora** (arquivo `.sql` completo).
+  A tela inicial do administrador avisa quando passa de 7 dias sem backup.
+- Para restaurar: phpMyAdmin → selecione o banco → Importar → o arquivo do backup (apaga os dados atuais).
+- Também dá para exportar pelo painel da KingHost (Bancos de Dados).
+
+### Antes de começar a usar de verdade (uma vez)
+1. Baixe um backup.
+2. Importe `database/zerar-movimento.sql` no phpMyAdmin: apaga vendas, comandas, pedidos, caixas, fiado e
+   históricos de teste; mantém produtos, preços, clientes (fiado zerado), usuários e configurações.
+3. Faça a contagem do estoque (ou importe a planilha com "Substituir").
+4. Confira em **Dados da loja**: nome, WhatsApp, horário, bairros e taxas de entrega.
+5. Confira em **Formas de pagamento**: taxas da maquininha e acréscimo do crédito.
+6. Crie os logins dos funcionários em **Usuários** e instale o app em cada aparelho, escolhendo Caixa 1 ou Caixa 2.
+
+### Checklist de publicação
+- [ ] PHP 8.1+ selecionado no painel
+- [ ] SSL ativo e o site abrindo em `https://`
+- [ ] `api/config.php` com `debug => false` e `jwt_secret` aleatório
+- [ ] `https://seudominio/api/health` responde `{"ok":true,...}`
+- [ ] `https://seudominio/api/config.php` responde **403** (bloqueado)
+- [ ] Versão do banco = 5 (Dados da loja → Backup e sistema)
+- [ ] Primeiro backup baixado
 
 ---
 
@@ -118,8 +139,8 @@ No `config.php` de desenvolvimento use `'cors_origins' => ['http://localhost:517
 1. Gere o pacote (`./montar-pacote.sh`) ou use o `parada-obrigatoria-deploy.zip` da etapa.
 2. Envie **todo o conteúdo** para a `www` por cima dos arquivos atuais (FileZilla: "Sobrescrever").
 3. **Não apague** o `api/config.php` — ele não vem no pacote.
-4. Se a etapa trouxer arquivo `database/atualizar-*.sql`, importe no phpMyAdmin **uma vez**. (Etapa 3: `atualizar-etapa3.sql`; etapa 4: `atualizar-etapa4.sql`; etapa 5: `atualizar-etapa5.sql`. A etapa 6 não muda o banco.)
-5. No PC/celular, feche e abra o app de novo para carregar a versão nova.
+4. Se a etapa trouxer arquivo `database/atualizar-*.sql`, importe no phpMyAdmin **uma vez**. (Etapa 3: `atualizar-etapa3.sql`; etapa 4: `atualizar-etapa4.sql`; etapa 5: `atualizar-etapa5.sql`. As etapas 6 e 7 não mudam o banco.)
+5. Nos aparelhos aparece a faixa **"Versão nova do sistema disponível" → Atualizar** (a partir da etapa 7).
 
 ## Rotas da API (etapa 1)
 
@@ -241,3 +262,14 @@ Período máximo: 2 anos. Sem `agrupar`, escolhe sozinho (até 31 dias: dia; at�
 - Vendas canceladas não entram em nenhuma conta (aparecem só como contagem).
 - Despesas fixas (aluguel, luz, salários) não fazem parte do sistema.
 - Tela: imprimir/salvar em PDF (sai tudo, todas as abas) e exportar para Excel (uma aba por relatório).
+
+## Rotas da API (etapa 7 — sistema)
+
+| Método | Rota | Acesso |
+|---|---|---|
+| GET | `/api/painel` (resumo do dia para a tela inicial; valores só para admin) | logado |
+| GET | `/api/sistema/info` (versões, contagens, último backup) | admin |
+| GET | `/api/backup` (baixa o banco inteiro em .sql) | admin |
+
+O `sw.js` recebe a versão no build (`vite.config.js`), então cada pacote novo é detectado pelos aparelhos.
+O manual de uso para a loja está no documento "Manual do sistema Parada Obrigatória".

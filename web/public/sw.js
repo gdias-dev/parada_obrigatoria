@@ -1,10 +1,15 @@
 // Service worker: deixa o app instalável e abre rápido.
 // A API (/api) NUNCA é cacheada — dados sempre ao vivo.
-const CACHE = 'parada-v1'
+// __VERSAO__ é trocado na hora do build: cada versão nova do sistema gera um sw.js diferente
+const CACHE = 'parada-__VERSAO__'
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(['/', '/index.html', '/logo.png'])))
-  self.skipWaiting()
+  // Não ativa sozinho: o app mostra "Atualizar" e a pessoa escolhe a hora (não interrompe uma venda)
+})
+
+self.addEventListener('message', (e) => {
+  if (e.data === 'SKIP_WAITING') self.skipWaiting()
 })
 
 self.addEventListener('activate', (e) => {
