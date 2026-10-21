@@ -70,6 +70,7 @@ export default function Loja() {
       )}
       <Bairros />
       <SistemaBackup />
+      <MensalidadesHistorico />
     </div>
   )
 }
@@ -163,6 +164,26 @@ function SistemaBackup() {
           <div><dt>Cadastros</dt><dd>{info.contagens.produtos} produtos · {info.contagens.clientes} clientes · {info.contagens.usuarios} usuários · {info.contagens.vendas} vendas</dd></div>
         </dl>
       )}
+    </section>
+  )
+}
+
+function MensalidadesHistorico() {
+  const [d, setD] = useState(null)
+  useEffect(() => { get('/mensalidade').then(setD).catch(() => {}) }, [])
+  if (!d || !d.historico.length) return null
+  const ST = { paga: ['Paga', 'positivo'], informada: ['Aguardando confirmação', 'aviso-txt'], aberta: ['Em aberto', 'negativo'] }
+  return (
+    <section className="painel painel-corpo grid-form" style={{ maxWidth: 720, marginTop: 16 }}>
+      <h2>Mensalidade do sistema</h2>
+      <p className="dica">{dinheiro(d.historico[0].valor)} por mês, para {d.recebedor}. O Pix aparece na tela inicial do dia 1 até o pagamento.</p>
+      <table className="tabela tabela-compacta">
+        <thead><tr><th>Mês</th><th className="num">Valor</th><th>Vencimento</th><th>Situação</th></tr></thead>
+        <tbody>{d.historico.map((m) => (
+          <tr key={m.id}><td>{m.mes.charAt(0).toUpperCase() + m.mes.slice(1)}</td><td className="num">{dinheiro(m.valor)}</td>
+            <td>{new Date(m.vencimento + 'T12:00:00').toLocaleDateString('pt-BR')}</td><td className={ST[m.status][1]}>{ST[m.status][0]}</td></tr>
+        ))}</tbody>
+      </table>
     </section>
   )
 }

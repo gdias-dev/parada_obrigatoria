@@ -20,6 +20,7 @@ require __DIR__ . '/src/Core.php';
 require __DIR__ . '/src/Estoque.php';
 require __DIR__ . '/src/Vendas.php';
 require __DIR__ . '/src/Fiado.php';
+require __DIR__ . '/src/Mensalidade.php';
 
 date_default_timezone_set($config['timezone'] ?? 'America/Sao_Paulo');
 mb_internal_encoding('UTF-8');
@@ -32,6 +33,7 @@ Http::cors($config['cors_origins'] ?? []);
 try {
     Db::init($config['db']);
     Auth::init($config);
+    Mensalidade::init($config);
 
     // Caminho depois de /api — funciona em /api/..., /sistema/api/... ou com o servidor do PHP
     $uri  = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';

@@ -44,6 +44,7 @@ $r->get('/painel', function () {
         $ultimo = lerConfig(['ultimo_backup'])['ultimo_backup'] ?? null;
         $out['ultimo_backup'] = $ultimo ?: null;
         $out['backup_atrasado'] = !$ultimo || strtotime($ultimo) < strtotime('-7 days');
+        try { $out['mensalidade'] = Mensalidade::resumoLoja(); } catch (Throwable $e) { error_log('[parada] mensalidade: ' . $e->getMessage()); $out['mensalidade'] = null; }
     }
     return $out;
 });

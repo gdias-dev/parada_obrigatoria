@@ -19,6 +19,7 @@ para o **Parada Obrigatória — Bar e Distribuidora de Bebidas**.
 | 6 | Relatórios financeiros | ✅ Pronta |
 | 7 | Publicação final, painel inicial, backup e instalação nos aparelhos | ✅ Pronta |
 | + | Venda de doses de destilados (`atualizar-doses.sql`) | ✅ Pronta |
+| + | Mensalidade do sistema (Pix todo dia 8) | ✅ Pronta |
 
 O banco (`database/schema.sql`) já tem as tabelas de **todas** as etapas.
 
@@ -281,3 +282,27 @@ O manual de uso para a loja está no documento "Manual do sistema Parada Obrigat
 - Estoque com 4 casas decimais (garrafa aberta). Mudar o volume da garrafa recalcula todas as doses dela.
 - Dose não aceita entrada (é na garrafa); aceita saída (cortesia, derramou). Por padrão não aparece online.
 - Planilha: colunas "Volume da garrafa (ml)" e "Dose (ml)"; a coluna "Engradado ou dose de" recebe o código da garrafa.
+
+## Mensalidade do sistema (cobrança do desenvolvedor)
+
+- R$ 100,00 por mês, vencimento dia 8, desde novembro/2026, Pix para o CNPJ 68.914.237/0001-11 (Nasctech).
+  Os padrões ficam em `api/src/Mensalidade.php`; para mudar sem mexer no código, use `'mensalidade' => [...]` no `config.php`.
+- Do dia 1 até o pagamento, a tela inicial do **administrador** mostra o aviso com QR Code e Pix copia e cola
+  (o código segue o padrão BR Code do Banco Central, com o identificador `PARADAAAAAMM`). Funcionário não vê.
+- "Já paguei" → e-mail para o desenvolvedor com **Confirmar recebimento** / **Não recebi** (links assinados).
+- Depois do vencimento: o aviso fica vermelho e o desenvolvedor recebe **um** e-mail de atraso. O sistema nunca trava.
+- Histórico: Dados da loja → Mensalidade do sistema. Área do desenvolvedor: `/api/mensalidade/dev?chave=<desenvolvedor_chave>`.
+- A tabela `mensalidades` é criada sozinha (não precisa de SQL).
+
+### Configurar no servidor (uma vez), no `api/config.php`
+```php
+'desenvolvedor_chave' => 'uma-chave-longa-so-sua',
+'email' => [
+    'smtp' => [
+        'host' => 'smtp.gmail.com', 'porta' => 465, 'seguranca' => 'ssl',
+        'usuario' => 'companynastech@gmail.com',
+        'senha' => 'senha-de-app-do-google',   // Conta Google > Segurança > Senhas de app
+    ],
+],
+```
+Sem o bloco `email`, o sistema tenta o `mail()` da hospedagem (pode não chegar).

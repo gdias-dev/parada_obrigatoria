@@ -5,6 +5,7 @@ import { get } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { useCaixa } from '../lib/caixa'
 import { dinheiro, quantidade, saudacao } from '../lib/format'
+import MensalidadeAviso from '../components/MensalidadeAviso'
 
 const ATALHOS = [
   { para: '/pdv', rotulo: 'Nova venda', desc: 'Balcão e mercadinho', icone: ShoppingCart },
@@ -20,8 +21,8 @@ export default function Inicio() {
   const d = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
   const hoje = d.charAt(0).toUpperCase() + d.slice(1)
 
+  const carregar = () => get('/painel').then(setP).catch(() => {})
   useEffect(() => {
-    const carregar = () => get('/painel').then(setP).catch(() => {})
     carregar()
     const t = setInterval(carregar, 60000)
     return () => clearInterval(t)
@@ -46,6 +47,8 @@ export default function Inicio() {
           : sessao ? `${caixa.nome} aberto desde ${sessao.aberto_em.slice(11, 16)} por ${sessao.aberto_por}`
           : `${caixa.nome} fechado — toque para abrir`}
       </Link>
+
+      {isAdmin && p?.mensalidade && <MensalidadeAviso m={p.mensalidade} onAtualizar={carregar} />}
 
       {avisos.length > 0 && (
         <ul className="inicio-avisos">
