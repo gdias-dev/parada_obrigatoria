@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import '@fontsource/barlow/400.css'
 import '@fontsource/barlow/500.css'
 import '@fontsource/barlow/600.css'
@@ -26,10 +26,26 @@ import Comanda from './pages/Comanda'
 import { CaixaProvider } from './lib/caixa'
 import ClientesLista, { Cliente } from './pages/Clientes'
 import FormasPagamento from './pages/FormasPagamento'
+import Pedidos from './pages/Pedidos'
+import Entregas, { Entregadores } from './pages/Entregas'
+import LojaOnline from './pages/publico/LojaOnline'
+import Acompanhar from './pages/publico/Acompanhar'
+import { PedidosAlertaProvider } from './lib/pedidosAlerta'
 import { todosItens } from './menu'
 
 function Rotas() {
   const { usuario, carregando, isAdmin } = useAuth()
+  const loc = useLocation()
+
+  // Páginas públicas (clientes fazendo pedido): não precisam de login
+  if (loc.pathname === '/pedir' || loc.pathname.startsWith('/pedido/')) {
+    return (
+      <Routes>
+        <Route path="/pedir" element={<LojaOnline />} />
+        <Route path="/pedido/:codigo" element={<Acompanhar />} />
+      </Routes>
+    )
+  }
 
   if (carregando) return <div className="carregando-tela"><img src="/logo.png" alt="Carregando" /></div>
   if (!usuario || usuario.precisa_trocar_senha) return <Login />
@@ -38,6 +54,7 @@ function Rotas() {
 
   return (
     <CaixaProvider>
+    <PedidosAlertaProvider onNovo={(n) => window.dispatchEvent(new CustomEvent('pedido-novo', { detail: n }))}>
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<Inicio />} />
@@ -52,12 +69,16 @@ function Rotas() {
         <Route path="clientes" element={<ClientesLista />} />
         <Route path="clientes/:id" element={<Cliente />} />
         <Route path="pagamentos" element={soAdmin(<FormasPagamento />)} />
+        <Route path="pedidos" element={<Pedidos />} />
+        <Route path="entregas" element={<Entregas />} />
+        <Route path="entregadores" element={soAdmin(<Entregadores />)} />
         {todosItens.filter((i) => !i.pronto).map((i) => (
           <Route key={i.para} path={i.para.slice(1)} element={i.admin ? soAdmin(<EmBreve item={i} />) : <EmBreve item={i} />} />
         ))}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
+    </PedidosAlertaProvider>
     </CaixaProvider>
   )
 }

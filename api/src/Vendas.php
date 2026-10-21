@@ -167,7 +167,8 @@ final class Vendas
         if ($desconto < 0 || $desconto > $subtotal - $valorCascos + 0.001) {
             throw new HttpError(422, 'Desconto inválido (não pode ser maior que o valor dos produtos).', ['campo' => 'desconto']);
         }
-        $devido = round($subtotal - $desconto, 2);
+        $taxaEntrega = round((float)($o['taxa_entrega'] ?? 0), 2);
+        $devido = round($subtotal - $desconto + $taxaEntrega, 2);
         $pags = self::calcularPagamentos($devido, $o['pagamentos']);
         $acrescimo = round(array_sum(array_column($pags, 'acrescimo')), 2);
         $taxaMaq = round(array_sum(array_column($pags, 'taxa_maquininha')), 2);
@@ -175,9 +176,9 @@ final class Vendas
 
         $vendaId = Db::insert(
             'INSERT INTO vendas (origem, comanda_id, caixa_sessao_id, cliente_id, usuario_id, subtotal, desconto, acrescimo, taxa_entrega, valor_cascos, total, custo_total, taxa_maquininha_total)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)',
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [$o['origem'], $o['comanda_id'] ?? null, $o['sessao_id'], $o['cliente_id'] ?? null, $o['usuario_id'],
-             $subtotal, $desconto, $acrescimo, $valorCascos, round($devido + $acrescimo, 2), $custoTotal, $taxaMaq]
+             $subtotal, $desconto, $acrescimo, $taxaEntrega, $valorCascos, round($devido + $acrescimo, 2), $custoTotal, $taxaMaq]
         );
         foreach ($itens as $i) {
             Db::exec(
@@ -227,7 +228,7 @@ final class Vendas
             'usuario' => $v['usuario'],
             'cliente_id' => $v['cliente_id'] !== null ? (int)$v['cliente_id'] : null, 'cliente_nome' => $v['cliente_nome'],
             'subtotal' => (float)$v['subtotal'], 'desconto' => (float)$v['desconto'], 'acrescimo' => (float)$v['acrescimo'],
-            'valor_cascos' => (float)$v['valor_cascos'], 'total' => (float)$v['total'],
+            'valor_cascos' => (float)$v['valor_cascos'], 'taxa_entrega' => (float)$v['taxa_entrega'], 'total' => (float)$v['total'],
             'motivo_cancelamento' => $v['motivo_cancelamento'], 'cancelada_em' => $v['cancelada_em'],
             'criado_em' => $v['criado_em'],
             'itens' => array_map(fn($i) => [
@@ -270,6 +271,8 @@ final class Vendas
                 [$motivo, $u['id'], $id]
             );
             if ($v['comanda_id']) Db::exec("UPDATE comandas SET status = 'cancelada' WHERE id = ?", [$v['comanda_id']]);
+            Db::exec("UPDATE pedidos_online SET status = 'cancelado', motivo_cancelamento = ? WHERE venda_id = ?", ["Venda cancelada: $motivo", $id]);
+            Db::exec("UPDATE entregas SET status = 'cancelada' WHERE venda_id = ? AND pago_entregador = 0", [$id]);
         });
     }
 }

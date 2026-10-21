@@ -3,7 +3,8 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { LogOut, Menu as MenuIcon, Settings2 } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { menuDoUsuario } from '../menu'
-import { iniciais } from './ui'
+import { usePedidosAlerta } from '../lib/pedidosAlerta'
+import { iniciais, useToast } from './ui'
 import TrocarSenhaModal from './TrocarSenhaModal'
 import MinhaContaModal from './MinhaContaModal'
 
@@ -13,6 +14,13 @@ export default function Layout() {
   const [trocandoSenha, setTrocandoSenha] = useState(false)
   const [contaAberta, setContaAberta] = useState(false)
   const loc = useLocation()
+  const { novos } = usePedidosAlerta()
+  const toast = useToast()
+  useEffect(() => {
+    const f = (e) => toast(`Chegou pedido novo! (${e.detail} esperando)`)
+    window.addEventListener('pedido-novo', f)
+    return () => window.removeEventListener('pedido-novo', f)
+  }, [toast])
 
   useEffect(() => setAberto(false), [loc.pathname])
 
@@ -24,6 +32,7 @@ export default function Layout() {
         </button>
         <img src="/logo.png" alt="" />
         <strong>Parada Obrigatória</strong>
+        {novos > 0 && <NavLink to="/pedidos" className="badge-novo topo">{novos} pedido{novos > 1 ? 's' : ''} novo{novos > 1 ? 's' : ''}</NavLink>}
       </header>
 
       <div className={`fundo-menu ${aberto ? 'aberto' : ''}`} onClick={() => setAberto(false)} />
@@ -44,6 +53,7 @@ export default function Layout() {
                 <NavLink key={i.para} to={i.para} end={i.para === '/'} className={({ isActive }) => `menu-link ${isActive ? 'ativo' : ''} ${i.pronto ? '' : 'pendente'}`} title={i.pronto ? undefined : `Chega na etapa ${i.etapa}`}>
                   <i.icone size={20} aria-hidden />
                   {i.rotulo}
+                  {i.para === '/pedidos' && novos > 0 && <span className="badge-novo" aria-label={`${novos} pedidos novos`}>{novos}</span>}
                   {!i.pronto && <span className="sr-only">(em breve)</span>}
                 </NavLink>
               ))}

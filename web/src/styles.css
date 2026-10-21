@@ -740,3 +740,154 @@ textarea.input { padding: 10px 14px; min-height: 72px; resize: vertical; }
 .grid-form.tres { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
 .forma-rodape { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 4px; }
 @media (max-width: 700px) { .resumo-fiado { grid-template-columns: 1fr; } }
+
+/* =========================================================
+   Etapa 5 — loja online (pública), pedidos, entregas
+   ========================================================= */
+.badge-novo { margin-left: auto; min-width: 22px; height: 22px; padding: 0 7px; border-radius: 11px; background: var(--erro); color: #fff; font-size: .75rem; font-weight: 700; display: inline-grid; place-items: center; animation: pulsar 1.4s ease-in-out infinite; }
+.badge-novo.topo { margin-left: auto; height: 30px; border-radius: 15px; padding: 0 12px; text-decoration: none; font-size: .8rem; }
+.menu-link.ativo .badge-novo { background: var(--barril); color: var(--chope); }
+
+/* --- Loja pública --- */
+.loja { min-height: 100%; background: var(--fundo); padding-bottom: 96px; }
+.loja-topo {
+  display: flex; gap: 16px; align-items: center; padding: 24px 20px 22px; padding-top: calc(24px + env(safe-area-inset-top));
+  background: var(--barril); color: var(--rotulo);
+  background-image: radial-gradient(circle at 12% 30%, rgb(227 166 47 / .16), transparent 45%), repeating-linear-gradient(92deg, rgb(255 255 255 / .018) 0 2px, transparent 2px 9px);
+}
+.loja-topo img { width: 84px; height: 84px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 3px var(--barril-3); }
+.loja-topo h1 { color: #fff; font-size: 1.8rem; }
+.loja-topo p { color: var(--chope); font-weight: 600; font-size: .95rem; }
+.loja-topo.compacto img { width: 56px; height: 56px; }
+.loja-topo.compacto h1 { font-size: 1.5rem; }
+.loja-topo.compacto p { color: rgb(235 224 197 / .75); font-weight: 500; }
+.loja-info { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; font-size: .85rem; color: rgb(235 224 197 / .8); }
+.loja-info span { display: inline-flex; align-items: center; gap: 4px; }
+.loja-status { padding: 2px 10px; border-radius: 999px; background: rgb(179 38 30 / .9); color: #fff; font-weight: 700; }
+.loja-status.aberta { background: #2e7a4c; }
+.loja-horario { color: rgb(235 224 197 / .7) !important; font-weight: 400 !important; font-size: .85rem !important; margin-top: 4px; }
+.loja-aviso { margin: 12px 16px 0; padding: 12px 14px; border-radius: var(--r); background: var(--erro-fundo); color: var(--erro); font-weight: 500; }
+.loja-cats { position: sticky; top: 0; z-index: 10; display: flex; gap: 6px; overflow-x: auto; padding: 10px 16px; background: var(--fundo); border-bottom: 1px solid var(--linha); scrollbar-width: none; }
+.loja-cats button { flex-shrink: 0; min-height: 38px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--linha-forte); background: var(--superficie); font-weight: 600; cursor: pointer; }
+.loja-cats button.ativa { background: var(--barril); color: var(--chope); border-color: var(--barril); }
+.loja-produtos { max-width: 720px; margin: 0 auto; padding: 8px 16px 24px; display: grid; gap: 8px; }
+.loja-secao { scroll-margin-top: 64px; }
+.loja-secao h2 { font-size: 1.4rem; margin: 18px 0 8px; }
+.loja-secao ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.loja-secao li { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--r); }
+.loja-secao li.esgotado { opacity: .55; }
+.lp-info { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.lp-info small { color: var(--texto-3); font-size: .82rem; }
+.lp-info b { color: var(--texto); font-size: 1.02rem; }
+.lp-casco { color: var(--aviso) !important; }
+.lp-add { width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--chope); color: var(--barril); display: grid; place-items: center; cursor: pointer; flex-shrink: 0; }
+.lp-add:disabled { opacity: .4; cursor: not-allowed; }
+.lp-esgotado { font-size: .8rem; font-weight: 700; color: var(--texto-3); }
+.lp-qtd { display: flex; align-items: center; gap: 4px; background: var(--barril); border-radius: 999px; padding: 3px; flex-shrink: 0; }
+.lp-qtd button { width: 36px; height: 36px; border-radius: 50%; border: 0; background: rgb(255 255 255 / .1); color: var(--chope); display: grid; place-items: center; cursor: pointer; }
+.lp-qtd span { min-width: 24px; text-align: center; color: #fff; font-weight: 700; }
+.loja-barra {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: 14px; z-index: 30; width: min(688px, calc(100% - 24px));
+  display: flex; justify-content: space-between; align-items: center; min-height: 60px; padding: 0 20px; padding-bottom: env(safe-area-inset-bottom);
+  border: 0; border-radius: var(--r-lg); background: var(--chope); color: var(--barril); font: inherit; font-size: 1.05rem; cursor: pointer;
+  box-shadow: 0 12px 30px rgb(43 28 19 / .35);
+}
+.loja-barra span { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.loja-rodape { text-align: center; color: var(--texto-2); font-size: .9rem; padding: 24px 0; display: grid; gap: 6px; justify-items: center; }
+.loja-rodape a { color: var(--ok); font-weight: 600; display: inline-flex; gap: 6px; align-items: center; }
+.loja-erro { display: grid; gap: 12px; justify-items: center; padding: 64px 24px; text-align: center; }
+.checkout-fundo { position: fixed; inset: 0; z-index: 50; background: rgb(20 12 7 / .55); display: grid; place-items: end center; animation: aparecer .15s ease; }
+.checkout {
+  width: min(720px, 100%); max-height: 94dvh; overflow: auto; background: var(--superficie); border-radius: var(--r-lg) var(--r-lg) 0 0;
+  padding: 18px 18px calc(24px + env(safe-area-inset-bottom)); display: grid; gap: 14px; animation: subir .2s ease;
+}
+.checkout-cab { display: flex; justify-content: space-between; align-items: center; }
+.checkout-itens { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.checkout-itens li { padding: 10px 0; border-bottom: 1px solid var(--linha); display: grid; gap: 6px; }
+.ck-linha { display: flex; align-items: center; gap: 10px; }
+.ck-nome { flex: 1; min-width: 0; font-weight: 600; }
+.ck-nome small { display: block; font-weight: 400; color: var(--texto-3); font-size: .8rem; }
+.ck-linha .lp-qtd button { width: 32px; height: 32px; }
+.ck-casco { display: flex; gap: 8px; align-items: flex-start; padding: 8px 10px; border-radius: 8px; background: var(--aviso-fundo); color: var(--aviso); font-size: .88rem; cursor: pointer; }
+.ck-casco input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--ok); }
+.chip-grande { min-height: 44px; padding: 6px 16px; font-weight: 600; font-size: .95rem; }
+.checkout-total { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; margin: 0; padding: 12px 14px; border-radius: var(--r); background: var(--fundo); }
+.checkout-total dd { margin: 0; text-align: right; font-weight: 600; }
+.checkout-total .total { font-size: 1.25rem; font-weight: 700; padding-top: 6px; border-top: 1px solid var(--linha-forte); }
+@media (min-width: 760px) { .checkout-fundo { place-items: center; } .checkout { border-radius: var(--r-lg); max-height: 90dvh; } }
+
+/* Acompanhar pedido */
+.acompanhar .loja-produtos { gap: 14px; padding-top: 20px; }
+.acomp-passos { list-style: none; margin: 0; padding: 18px; display: grid; gap: 14px; background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--r-lg); }
+.acomp-passos li { display: flex; align-items: center; gap: 12px; color: var(--texto-3); font-weight: 600; }
+.acomp-passos .bolinha { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--linha-forte); font-size: .85rem; flex-shrink: 0; background: var(--superficie); }
+.acomp-passos li.feito { color: var(--ok); }
+.acomp-passos li.feito .bolinha { background: var(--ok); border-color: var(--ok); color: #fff; }
+.acomp-passos li.atual { color: var(--texto); font-size: 1.1rem; }
+.acomp-passos li.atual .bolinha { background: var(--chope); border-color: var(--chope); color: var(--barril); animation: pulsar 1.6s ease-in-out infinite; }
+.acomp-status { text-align: center; font-family: var(--fonte-titulo); font-size: 1.4rem; font-weight: 600; }
+.acomp-cancelado { padding: 18px; border-radius: var(--r-lg); background: var(--erro-fundo); color: var(--erro); text-align: center; }
+.acomp-resumo { padding: 16px 18px; background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--r-lg); display: grid; gap: 10px; }
+.acomp-resumo ul { list-style: none; margin: 0; padding: 0; }
+.acomp-resumo li { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px dashed var(--linha); }
+.acomp-resumo li.total { font-size: 1.15rem; border-bottom: 0; }
+
+/* --- Painel de pedidos --- */
+.loja-switch { padding: 0 14px; min-height: 44px; border-radius: var(--r); border: 1px solid var(--linha-forte); background: var(--superficie); }
+.loja-switch.on { border-color: #9fd3b3; background: var(--ok-fundo); color: var(--ok); }
+.link-loja { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 14px; margin-bottom: 14px; border-radius: var(--r); background: var(--superficie); border: 1px dashed var(--linha-forte); font-size: .925rem; }
+.link-loja a { font-weight: 700; color: var(--chope-forte); overflow-wrap: anywhere; }
+.grade-pedidos { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 12px; align-items: start; }
+.pedido-card { background: var(--superficie); border: 1px solid var(--linha); border-top: 5px solid var(--linha-forte); border-radius: var(--r-lg); padding: 14px 16px; display: grid; gap: 10px; }
+.pedido-card.novo { border-top-color: var(--erro); box-shadow: 0 0 0 2px rgb(179 38 30 / .15); }
+.pedido-card.aceito { border-top-color: var(--chope); }
+.pedido-card.pronto, .pedido-card.rota { border-top-color: #3b6fb6; }
+.pedido-card.entregue { border-top-color: var(--ok); }
+.pedido-card header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.pedido-card header small { color: var(--texto-3); white-space: nowrap; }
+.pc-codigo { font-family: var(--fonte-titulo); font-size: 1.35rem; margin-left: 8px; vertical-align: middle; }
+.st-novo { background: var(--erro); color: #fff; }
+.st-aceito { background: var(--chope-claro); color: var(--aviso); }
+.st-pronto, .st-rota { background: #e3edf9; color: #2b5797; }
+.st-entregue { background: var(--ok-fundo); color: var(--ok); }
+.st-cancelado { background: var(--linha); color: var(--texto-2); }
+.pc-cliente { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+.pc-cliente strong { font-size: 1.1rem; }
+.pc-cliente a { color: var(--ok); font-weight: 600; text-decoration: none; display: inline-flex; gap: 4px; align-items: center; font-size: .9rem; }
+.pc-endereco { display: flex; gap: 6px; align-items: flex-start; font-size: .92rem; color: var(--texto-2); }
+.pc-endereco svg { flex-shrink: 0; margin-top: 3px; }
+.pc-itens { list-style: none; margin: 0; padding: 8px 0; border-top: 1px dashed var(--linha); border-bottom: 1px dashed var(--linha); display: grid; gap: 4px; font-size: .92rem; }
+.pc-itens li { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.pc-itens li > span { flex: 1; }
+.pc-itens li.casco { color: var(--aviso); }
+.pc-obs { font-style: italic; color: var(--texto-2); font-size: .92rem; }
+.pc-total { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.pc-total span { color: var(--texto-2); font-size: .88rem; }
+.pc-total strong { font-family: var(--fonte-titulo); font-size: 1.6rem; }
+.pedido-card footer { display: flex; gap: 6px; flex-wrap: wrap; }
+.pedido-card footer .btn-grande { flex: 1; }
+.lista-escolha { display: grid; gap: 8px; }
+.lista-escolha button { display: grid; gap: 2px; text-align: left; padding: 12px 14px; border: 2px solid var(--linha); border-radius: var(--r); background: var(--superficie); cursor: pointer; font: inherit; }
+.lista-escolha button[aria-pressed='true'] { border-color: var(--chope); background: var(--chope-claro); }
+.lista-escolha small { color: var(--texto-3); }
+.mini-check { display: inline-flex; gap: 4px; align-items: center; margin-left: 8px; font-size: .8rem; color: var(--aviso); }
+
+/* Entregas */
+.grade-entregadores { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.entregador-card { display: grid; gap: 12px; }
+.ec-cab { display: flex; gap: 10px; align-items: center; }
+.ec-cab svg { color: var(--chope-forte); }
+.ec-cab small { display: block; color: var(--texto-3); font-size: .82rem; }
+.entregador-card dl { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; margin: 0; }
+.entregador-card dd { margin: 0; text-align: right; font-weight: 600; }
+.entregador-card .destaque { font-size: 1.1rem; color: var(--texto); }
+.entregador-card dd.destaque small { font-weight: 400; color: var(--texto-3); font-size: .8rem; }
+
+/* Bairros */
+.lista-bairros { list-style: none; margin: 0; padding: 0; border: 1px solid var(--linha); border-radius: var(--r); }
+.lista-bairros li { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-bottom: 1px solid var(--linha); }
+.lista-bairros li:last-child { border-bottom: 0; }
+.lista-bairros li > span { flex: 1; font-weight: 600; }
+.lista-bairros li.inativo > span { color: var(--texto-3); text-decoration: line-through; }
+.lista-bairros .input { min-height: 40px; }
+@media (max-width: 700px) { .grade-pedidos { grid-template-columns: 1fr; } }

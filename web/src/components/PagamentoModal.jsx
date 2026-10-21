@@ -16,7 +16,7 @@ let cacheFormas = null
  * Pode dividir em várias formas (ex.: parte no Pix, parte no dinheiro).
  * onConfirmar(pagamentos) deve chamar a API e lançar erro se falhar.
  */
-export default function PagamentoModal({ aberto, devido, titulo = 'Receber pagamento', onFechar, onConfirmar, clienteInicial = null, permitirFiado = true }) {
+export default function PagamentoModal({ aberto, devido, titulo = 'Receber pagamento', onFechar, onConfirmar, clienteInicial = null, permitirFiado = true, formaSugeridaId = null }) {
   const [formas, setFormas] = useState(cacheFormas)
   const [pags, setPags] = useState([])
   const [erro, setErro] = useState('')
@@ -27,8 +27,12 @@ export default function PagamentoModal({ aberto, devido, titulo = 'Receber pagam
   useEffect(() => {
     if (!aberto) return
     setPags([]); setErro(''); setCliente(clienteInicial)
-    get('/formas-pagamento').then((f) => { cacheFormas = f; setFormas(f) }).catch((e) => setErro(e.message))
-  }, [aberto, devido])
+    get('/formas-pagamento').then((f) => {
+      cacheFormas = f; setFormas(f)
+      const sug = formaSugeridaId && f.find((x) => x.id === formaSugeridaId)
+      if (sug) setPags([{ forma_pagamento_id: sug.id, valor: paraCampo(devido), recebido: '', bandeira: sug.bandeiras[0] || '' }])
+    }).catch((e) => setErro(e.message))
+  }, [aberto, devido]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const forma = (id) => formas?.find((f) => f.id === id)
   const pagos = arred(pags.reduce((s, p) => s + (numero(p.valor) || 0), 0))

@@ -12,8 +12,8 @@ export const MENU = [
       { para: '/', rotulo: 'Início', icone: Home, pronto: true },
       { para: '/pdv', rotulo: 'Vender (PDV)', icone: ShoppingCart, pronto: true },
       { para: '/comandas', rotulo: 'Comandas', icone: ClipboardList, pronto: true },
-      { para: '/pedidos', rotulo: 'Pedidos online', icone: Globe, etapa: 5 },
-      { para: '/entregas', rotulo: 'Entregas', icone: Bike, etapa: 5 },
+      { para: '/pedidos', rotulo: 'Pedidos online', icone: Globe, pronto: true },
+      { para: '/entregas', rotulo: 'Entregas', icone: Bike, pronto: true },
       { para: '/caixa', rotulo: 'Caixa', icone: Wallet, pronto: true },
     ],
   },
@@ -22,7 +22,7 @@ export const MENU = [
     itens: [
       { para: '/produtos', rotulo: 'Produtos e estoque', icone: Package, pronto: true },
       { para: '/clientes', rotulo: 'Clientes e fiado', icone: UserRound, pronto: true },
-      { para: '/entregadores', rotulo: 'Entregadores', icone: Bike, etapa: 5, admin: true },
+      { para: '/entregadores', rotulo: 'Entregadores', icone: UserRound, pronto: true, admin: true },
     ],
   },
   {

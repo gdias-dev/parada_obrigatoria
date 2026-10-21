@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 /** @var Router $r */
 
-const CONFIG_PUBLICAS = ['loja_nome', 'loja_subtitulo', 'loja_whatsapp', 'loja_endereco', 'pedidos_online_ativo', 'pedido_minimo'];
+const CONFIG_PUBLICAS = ['loja_nome', 'loja_subtitulo', 'loja_whatsapp', 'loja_endereco', 'pedidos_online_ativo', 'pedido_minimo', 'tempo_entrega', 'horario_funcionamento', 'aceita_retirada'];
 
 function lerConfig(array $chaves): array
 {
@@ -23,6 +23,14 @@ $r->put('/config', function () {
         $v = mb_substr(trim((string)$d[$k]), 0, 500);
         Db::exec('INSERT INTO configuracoes (chave, valor) VALUES (?, ?) ON DUPLICATE KEY UPDATE valor = VALUES(valor)', [$k, $v]);
     }
+    return lerConfig(CONFIG_PUBLICAS);
+});
+
+/** Abrir/fechar a loja online rapidamente (qualquer usuário logado). */
+$r->post('/config/loja-online', function () {
+    Auth::user();
+    $ativo = V::bool(Http::body(), 'ativo') ? '1' : '0';
+    Db::exec("INSERT INTO configuracoes (chave, valor) VALUES ('pedidos_online_ativo', ?) ON DUPLICATE KEY UPDATE valor = VALUES(valor)", [$ativo]);
     return lerConfig(CONFIG_PUBLICAS);
 });
 

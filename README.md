@@ -15,8 +15,8 @@ para o **Parada Obrigatória — Bar e Distribuidora de Bebidas**.
 | 2 | Produtos, estoque e importação por Excel | ✅ Pronta |
 | 3 | PDV (2 caixas), comandas, caixa, engradados e cascos | ✅ Pronta |
 | 4 | Clientes, fiado e formas de pagamento | ✅ Pronta |
-| 5 | Pedidos online e entregas | Próxima |
-| 6 | Relatórios financeiros | — |
+| 5 | Pedidos online e entregas | ✅ Pronta |
+| 6 | Relatórios financeiros | Próxima |
 | 7 | Publicação final e instalação nos aparelhos | — |
 
 O banco (`database/schema.sql`) já tem as tabelas de **todas** as etapas.
@@ -118,7 +118,7 @@ No `config.php` de desenvolvimento use `'cors_origins' => ['http://localhost:517
 1. Gere o pacote (`./montar-pacote.sh`) ou use o `parada-obrigatoria-deploy.zip` da etapa.
 2. Envie **todo o conteúdo** para a `www` por cima dos arquivos atuais (FileZilla: "Sobrescrever").
 3. **Não apague** o `api/config.php` — ele não vem no pacote.
-4. Se a etapa trouxer arquivo `database/atualizar-*.sql`, importe no phpMyAdmin **uma vez**. (Etapa 3: `atualizar-etapa3.sql`; etapa 4: `atualizar-etapa4.sql`.)
+4. Se a etapa trouxer arquivo `database/atualizar-*.sql`, importe no phpMyAdmin **uma vez**. (Etapa 3: `atualizar-etapa3.sql`; etapa 4: `atualizar-etapa4.sql`; etapa 5: `atualizar-etapa5.sql`.)
 5. No PC/celular, feche e abra o app de novo para carregar a versão nova.
 
 ## Rotas da API (etapa 1)
@@ -198,3 +198,26 @@ No `config.php` de desenvolvimento use `'cors_origins' => ['http://localhost:517
 - Pagamento do fiado entra no caixa aberto (dinheiro conta na gaveta) e pode ser parcial, com troco.
 - Cancelar uma venda fiado abate o valor da conta do cliente.
 - Ajuste (admin): lançar dívida antiga do caderno, perdoar ou corrigir — não mexe no caixa.
+
+## Rotas da API (etapa 5 — pedidos online e entregas)
+
+| Método | Rota | Acesso |
+|---|---|---|
+| GET | `/api/publico/cardapio` | público |
+| POST | `/api/publico/pedidos` (limite de 5 por IP a cada 10 min) | público |
+| GET | `/api/publico/pedido?codigo=ABC123` | público |
+| GET | `/api/pedidos?grupo=ativos\|finalizados\|cancelados` · `/api/pedidos/resumo` | logado |
+| POST | `/api/pedidos` (pedido por telefone) | logado |
+| POST | `/api/pedidos/{id}/aceitar` · `/despachar` · `/finalizar` · `/cancelar` | logado |
+| POST | `/api/config/loja-online` (abrir/fechar a loja online) | logado |
+| GET | `/api/bairros` · POST/PUT/DELETE | logado / admin |
+| GET | `/api/entregadores` · POST/PUT | logado / admin |
+| GET | `/api/entregas?de=&ate=&entregador=&pago=` | logado |
+| POST | `/api/entregadores/{id}/acertar` | logado |
+
+### Regras dos pedidos
+- Página pública: `/pedir` (link para Instagram/WhatsApp) e acompanhamento em `/pedido/CODIGO`.
+- Online não vende sem estoque e respeita o pedido mínimo; fiado não aparece no site.
+- O estoque baixa quando a loja **aceita**; vira venda (com taxa de entrega) quando é **entregue**.
+- O cliente é cadastrado automaticamente pelo telefone (sem fiado liberado).
+- Entregador recebe valor fixo por entrega ou a taxa inteira; o acerto pode sair do caixa como sangria.
