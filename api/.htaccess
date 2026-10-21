@@ -1,0 +1,16 @@
+# API — todas as rotas vão para index.php
+Options -Indexes
+RewriteEngine On
+
+# Repassa o header Authorization (a KingHost/Apache pode descartá-lo)
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [QSA,L]
+
+# Bloqueia acesso direto aos arquivos internos
+<FilesMatch "^(config\.php|config\.example\.php)$">
+  Require all denied
+</FilesMatch>
+RewriteRule ^(src|routes)/ - [F,L]

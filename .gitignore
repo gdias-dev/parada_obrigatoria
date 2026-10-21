@@ -1,0 +1,6 @@
+node_modules/
+web/dist/
+pacote/
+*.zip
+api/config.php
+.DS_Store
