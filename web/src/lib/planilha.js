@@ -168,3 +168,25 @@ export function exportarProdutos(itens) {
   const hoje = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')
   return gravar([abaProdutos(itens), abaInstrucoes()], `produtos-parada-obrigatoria-${hoje}.xlsx`)
 }
+
+/**
+ * Exporta o relatório financeiro em várias abas.
+ * abas: [{ nome, colunas: [{ titulo, largura, tipo: 'texto'|'dinheiro'|'numero'|'pct' , chave }], linhas: [obj] }]
+ */
+export async function exportarRelatorio(abas, nomeArquivo) {
+  const fmt = { dinheiro: '#,##0.00', numero: '0.###', pct: '0.0' }
+  await gravar(abas.map((a) => ({
+    nome: a.nome.slice(0, 31),
+    colunas: a.colunas.map((c) => ({ width: c.largura || 14 })),
+    dados: [
+      a.colunas.map((c) => ({ value: c.titulo, ...estiloCabecalho })),
+      ...a.linhas.map((l) => a.colunas.map((c) => {
+        const v = typeof c.chave === 'function' ? c.chave(l) : l[c.chave]
+        if (c.tipo === 'texto' || !c.tipo) return { type: String, value: v == null ? '' : String(v) }
+        if (v === null || v === undefined || v === '') return null
+        if (typeof v === 'string') return { type: String, value: v }
+        return { type: Number, value: Number(v), format: fmt[c.tipo] }
+      })),
+    ],
+  })), nomeArquivo)
+}

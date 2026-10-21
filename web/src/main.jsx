@@ -28,6 +28,7 @@ import ClientesLista, { Cliente } from './pages/Clientes'
 import FormasPagamento from './pages/FormasPagamento'
 import Pedidos from './pages/Pedidos'
 import Entregas, { Entregadores } from './pages/Entregas'
+import Relatorios from './pages/Relatorios'
 import LojaOnline from './pages/publico/LojaOnline'
 import Acompanhar from './pages/publico/Acompanhar'
 import { PedidosAlertaProvider } from './lib/pedidosAlerta'
@@ -72,6 +73,7 @@ function Rotas() {
         <Route path="pedidos" element={<Pedidos />} />
         <Route path="entregas" element={<Entregas />} />
         <Route path="entregadores" element={soAdmin(<Entregadores />)} />
+        <Route path="relatorios" element={soAdmin(<Relatorios />)} />
         {todosItens.filter((i) => !i.pronto).map((i) => (
           <Route key={i.para} path={i.para.slice(1)} element={i.admin ? soAdmin(<EmBreve item={i} />) : <EmBreve item={i} />} />
         ))}

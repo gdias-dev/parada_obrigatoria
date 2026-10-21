@@ -16,8 +16,8 @@ para o **Parada Obrigatória — Bar e Distribuidora de Bebidas**.
 | 3 | PDV (2 caixas), comandas, caixa, engradados e cascos | ✅ Pronta |
 | 4 | Clientes, fiado e formas de pagamento | ✅ Pronta |
 | 5 | Pedidos online e entregas | ✅ Pronta |
-| 6 | Relatórios financeiros | Próxima |
-| 7 | Publicação final e instalação nos aparelhos | — |
+| 6 | Relatórios financeiros | ✅ Pronta |
+| 7 | Publicação final e instalação nos aparelhos | Próxima |
 
 O banco (`database/schema.sql`) já tem as tabelas de **todas** as etapas.
 
@@ -118,7 +118,7 @@ No `config.php` de desenvolvimento use `'cors_origins' => ['http://localhost:517
 1. Gere o pacote (`./montar-pacote.sh`) ou use o `parada-obrigatoria-deploy.zip` da etapa.
 2. Envie **todo o conteúdo** para a `www` por cima dos arquivos atuais (FileZilla: "Sobrescrever").
 3. **Não apague** o `api/config.php` — ele não vem no pacote.
-4. Se a etapa trouxer arquivo `database/atualizar-*.sql`, importe no phpMyAdmin **uma vez**. (Etapa 3: `atualizar-etapa3.sql`; etapa 4: `atualizar-etapa4.sql`; etapa 5: `atualizar-etapa5.sql`.)
+4. Se a etapa trouxer arquivo `database/atualizar-*.sql`, importe no phpMyAdmin **uma vez**. (Etapa 3: `atualizar-etapa3.sql`; etapa 4: `atualizar-etapa4.sql`; etapa 5: `atualizar-etapa5.sql`. A etapa 6 não muda o banco.)
 5. No PC/celular, feche e abra o app de novo para carregar a versão nova.
 
 ## Rotas da API (etapa 1)
@@ -221,3 +221,23 @@ No `config.php` de desenvolvimento use `'cors_origins' => ['http://localhost:517
 - O estoque baixa quando a loja **aceita**; vira venda (com taxa de entrega) quando é **entregue**.
 - O cliente é cadastrado automaticamente pelo telefone (sem fiado liberado).
 - Entregador recebe valor fixo por entrega ou a taxa inteira; o acerto pode sair do caixa como sangria.
+
+## Rotas da API (etapa 6 — relatórios)
+
+| Método | Rota | Acesso |
+|---|---|---|
+| GET | `/api/relatorios?de=AAAA-MM-DD&ate=AAAA-MM-DD&agrupar=dia\|semana\|mes` | admin |
+
+Devolve tudo de uma vez: resumo e comparação com o período anterior de mesmo tamanho, série no tempo,
+produtos, categorias, formas de pagamento, origem (balcão/comanda/online), equipe, horários, fiado, entregas e cascos.
+Período máximo: 2 anos. Sem `agrupar`, escolhe sozinho (até 31 dias: dia; até 120: semana; acima: mês).
+
+### Como o lucro é calculado
+- **Faturamento** = tudo que os clientes pagaram nas vendas concluídas (com acréscimos, taxa de entrega e cascos).
+- **Lucro líquido** = faturamento − cascos cobrados − custo das mercadorias − taxas da maquininha − pago aos entregadores.
+- Casco é depósito do vasilhame: entra no caixa, mas não é receita.
+- O custo usado é o gravado no momento da venda (mudar o custo depois não altera relatórios antigos).
+- Venda no fiado conta no dia da venda; a taxa da maquininha do pagamento do fiado conta no dia em que foi paga.
+- Vendas canceladas não entram em nenhuma conta (aparecem só como contagem).
+- Despesas fixas (aluguel, luz, salários) não fazem parte do sistema.
+- Tela: imprimir/salvar em PDF (sai tudo, todas as abas) e exportar para Excel (uma aba por relatório).

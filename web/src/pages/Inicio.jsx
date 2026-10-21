@@ -12,8 +12,8 @@ const ATALHOS = [
   { para: '/produtos', rotulo: 'Produtos', desc: 'Estoque e preços', icone: Package },
 ]
 
-const ETAPA_ATUAL = 6 // próxima etapa em desenvolvimento
-const FEITAS = 5
+const ETAPA_ATUAL = 7 // próxima etapa em desenvolvimento
+const FEITAS = 6
 
 export default function Inicio() {
   const { usuario, isAdmin } = useAuth()

@@ -28,7 +28,7 @@ export const MENU = [
   {
     grupo: 'Gestão',
     itens: [
-      { para: '/relatorios', rotulo: 'Relatórios', icone: BarChart3, etapa: 6, admin: true },
+      { para: '/relatorios', rotulo: 'Relatórios', icone: BarChart3, etapa: 6, admin: true, pronto: true },
       { para: '/pagamentos', rotulo: 'Formas de pagamento', icone: CreditCard, pronto: true, admin: true },
       { para: '/usuarios', rotulo: 'Usuários', icone: ShieldCheck, pronto: true, admin: true },
       { para: '/loja', rotulo: 'Dados da loja', icone: Settings, pronto: true, admin: true },
