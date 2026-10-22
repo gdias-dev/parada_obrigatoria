@@ -185,7 +185,7 @@ function analisarImportacao(array $linhas, string $modoEstoque): array
 
         if (!$existente) {
             if ($nome === null) $erros[] = 'Produto novo precisa de nome';
-            if ($venda === null || $venda <= 0) $erros[] = 'Produto novo precisa de preço de venda';
+            if ($venda === null || $venda <= 0) $avisos[] = 'Sem preço de venda: entra no cadastro, mas só pode ser vendido depois que tiver preço';
             if ($custo === null && $embDe === null) $avisos[] = 'Sem preço de custo: o lucro deste produto vai aparecer errado';
             if ($estoque === null && $embDe === null) $avisos[] = 'Sem estoque na planilha: o sistema não vai controlar o estoque deste item (ideal para drinks, copões e combos)';
         }
@@ -317,7 +317,7 @@ $r->post('/produtos/importar', function () {
                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                     [$p['codigo'], $p['nome'], $catId, $baseId, $baseId ? $p['emb_fator'] : null, $baseId ? null : $p['volume_ml'], $baseId ? $p['dose_ml'] : null,
                      $p['unidade'] ?? ($baseId ? 'CX' : 'UN'),
-                     $baseId ? 0 : ($p['custo'] ?? 0), $p['venda'], $p['minimo'] ?? 0, $p['controla'] ? 1 : 0, $p['dose_ml'] ? 0 : 1]
+                     $baseId ? 0 : ($p['custo'] ?? 0), $p['venda'] ?? 0, $p['minimo'] ?? 0, $p['controla'] ? 1 : 0, $p['dose_ml'] ? 0 : 1]
                 );
                 if (abs($p['estoque_depois']) > 0.0005) {
                     Estoque::mover($id, $p['estoque_depois'], 'importacao', $motivo, $p['custo'], null, (int)$u['id']);

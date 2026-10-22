@@ -30,7 +30,7 @@ function disponivelOnline(array $p): bool
 
 $r->get('/publico/cardapio', function () {
     $rows = Db::all(SQL_PRODUTO . "
-        WHERE p.ativo = 1 AND p.visivel_online = 1 AND (c.id IS NULL OR c.visivel_online = 1)
+        WHERE p.ativo = 1 AND p.visivel_online = 1 AND p.preco_venda > 0 AND (c.id IS NULL OR c.visivel_online = 1)
         ORDER BY c.ordem IS NULL, c.ordem, c.nome, p.nome");
     $cats = [];
     foreach ($rows as $p) {

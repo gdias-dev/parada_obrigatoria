@@ -321,7 +321,7 @@ function NovoPedidoTelefone({ onFechar, onCriado }) {
         )}
         <div className="campo">
           <span className="rotulo-mini">Produtos</span>
-          <BuscaProduto mostrarGrade={false} autoFocus={false}
+          <BuscaProduto mostrarGrade={false} autoFocus={false} onErro={setErro}
             onEscolher={(p, qtd) => setItens((l) => l.some((i) => i.p.id === p.id) ? l.map((i) => i.p.id === p.id ? { ...i, qtd: i.qtd + qtd } : i) : [...l, { p, qtd, casco_trouxe: false }])} />
           <ul className="pc-itens">
             {itens.map((i, k) => (

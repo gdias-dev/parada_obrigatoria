@@ -16,6 +16,7 @@ const FILTROS = [
   ['ativos', 'Todos'],
   ['baixo', 'Acabando'],
   ['zerado', 'Sem estoque'],
+  ['sem_preco', 'Sem preço'],
   ['inativos', 'Desativados'],
 ]
 
@@ -233,11 +234,11 @@ export default function Produtos() {
                           : <span className="nome-sub">não controla</span>}
                       {p.usa_casco && <small className="nome-sub casco-info">{p.estoque_cascos} casco{p.estoque_cascos === 1 ? '' : 's'} vazio{p.estoque_cascos === 1 ? '' : 's'}</small>}
                     </td>
-                    <td className="num preco" data-rotulo="Venda">{dinheiro(p.preco_venda)}</td>
+                    <td className="num preco" data-rotulo="Venda">{p.preco_venda > 0 ? dinheiro(p.preco_venda) : <span className="falta">sem preço</span>}</td>
                     {isAdmin && <td className="num" data-rotulo="Custo">{p.preco_custo > 0 ? dinheiro(p.preco_custo) : <span className="falta">sem custo</span>}</td>}
                     {isAdmin && (
                       <td className="num" data-rotulo="Lucro">
-                        {p.preco_custo > 0
+                        {p.preco_custo > 0 && p.preco_venda > 0
                           ? <span className={p.lucro_unitario < 0 ? 'negativo' : 'positivo'}>{dinheiro(p.lucro_unitario)} <small>{porcentagem(p.margem_pct)}</small></span>
                           : '—'}
                       </td>

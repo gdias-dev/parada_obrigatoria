@@ -47,6 +47,11 @@ const BuscaProduto = forwardRef(function BuscaProduto({ onEscolher, onErro, auto
   }, [termo])
 
   function escolher(p, qtd = mult) {
+    if (!(p.preco_venda > 0)) {
+      onErro?.(`"${p.nome}" está sem preço de venda. Cadastre o preço em Produtos.`)
+      setTexto(''); setResultados([]); inputRef.current?.focus()
+      return
+    }
     onEscolher(p, qtd)
     setTexto(''); setResultados([])
     inputRef.current?.focus()
@@ -92,7 +97,7 @@ const BuscaProduto = forwardRef(function BuscaProduto({ onEscolher, onErro, auto
                   <strong>{p.nome}</strong>
                   <small>{infoEstoque(p)}</small>
                 </span>
-                <b>{dinheiro(p.preco_venda)}</b>
+                <b>{p.preco_venda > 0 ? dinheiro(p.preco_venda) : <span className="falta">sem preço</span>}</b>
               </button>
             </li>
           ))}
@@ -115,7 +120,7 @@ const BuscaProduto = forwardRef(function BuscaProduto({ onEscolher, onErro, auto
               <button key={p.id} className="tile" onClick={() => escolher(p, mult)}>
                 <span className="tile-nome">{p.nome}</span>
                 <span className="tile-rodape">
-                  <b>{dinheiro(p.preco_venda)}</b>
+                  <b>{p.preco_venda > 0 ? dinheiro(p.preco_venda) : <span className="falta">sem preço</span>}</b>
                   <small className={estiloEstoque(p)}>{infoEstoque(p, true)}</small>
                 </span>
               </button>

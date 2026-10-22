@@ -187,7 +187,8 @@ function dadosProduto(array $d, ?array $atual = null): array
         'unidade'          => $doseMl ? 'UN' : V::enum($d, 'unidade', UNIDADES, $atual['unidade'] ?? ($baseId ? 'CX' : 'UN')),
         // embalagem não tem custo próprio: é calculado pela unidade
         'preco_custo'      => $baseId ? 0.0 : (V::money($d, 'preco_custo', false) ?? (float)($atual['preco_custo'] ?? 0)),
-        'preco_venda'      => V::money($d, 'preco_venda'),
+        // pode ficar sem preço (0): o produto é cadastrado, mas só pode ser vendido depois de ter preço
+        'preco_venda'      => V::money($d, 'preco_venda', false) ?? (float)($atual['preco_venda'] ?? 0),
         'estoque_minimo'   => $baseId ? 0.0 : (V::money($d, 'estoque_minimo', false) ?? (float)($atual['estoque_minimo'] ?? 0)),
         // embalagem não tem estoque próprio: usa o da unidade
         'controla_estoque' => $baseId ? 0 : V::bool($d, 'controla_estoque', (bool)($atual['controla_estoque'] ?? true)),
@@ -219,6 +220,7 @@ $r->get('/produtos', function () {
         'inativos' => $where[] = 'p.ativo = 0',
         'baixo'    => $where[] = 'p.ativo = 1 AND p.controla_estoque = 1 AND p.estoque <= p.estoque_minimo',
         'zerado'   => $where[] = 'p.ativo = 1 AND p.controla_estoque = 1 AND p.estoque <= 0',
+        'sem_preco'=> $where[] = 'p.ativo = 1 AND p.preco_venda <= 0',
         'todos'    => null,
         default    => $where[] = 'p.ativo = 1',
     };
@@ -285,10 +287,11 @@ $r->get('/produtos/resumo', function () {
             SUM(controla_estoque = 1 AND estoque <= 0) AS zerado,
             SUM(CASE WHEN controla_estoque = 1 AND estoque > 0 THEN estoque * preco_custo ELSE 0 END) AS valor_custo,
             SUM(CASE WHEN controla_estoque = 1 AND estoque > 0 THEN estoque * preco_venda ELSE 0 END) AS valor_venda,
-            SUM(preco_custo <= 0 AND produto_base_id IS NULL) AS sem_custo
+            SUM(preco_custo <= 0 AND produto_base_id IS NULL) AS sem_custo,
+            SUM(preco_venda <= 0) AS sem_preco
          FROM produtos WHERE ativo = 1"
     );
-    $out = ['total' => (int)$r['total'], 'baixo' => (int)$r['baixo'], 'zerado' => (int)$r['zerado']];
+    $out = ['total' => (int)$r['total'], 'baixo' => (int)$r['baixo'], 'zerado' => (int)$r['zerado'], 'sem_preco' => (int)$r['sem_preco']];
     if (Auth::isAdmin()) {
         $out['valor_custo'] = round((float)$r['valor_custo'], 2);
         $out['valor_venda'] = round((float)$r['valor_venda'], 2);

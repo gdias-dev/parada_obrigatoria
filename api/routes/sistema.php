@@ -41,6 +41,7 @@ $r->get('/painel', function () {
         $out['fiado_a_receber'] = round((float)Db::value('SELECT COALESCE(SUM(saldo_fiado),0) FROM clientes WHERE saldo_fiado > 0'), 2);
         $out['entregadores_a_pagar'] = round((float)Db::value("SELECT COALESCE(SUM(valor_entregador),0) FROM entregas WHERE status = 'entregue' AND pago_entregador = 0"), 2);
         $out['sem_custo'] = (int)Db::value('SELECT COUNT(*) FROM produtos WHERE ativo = 1 AND produto_base_id IS NULL AND preco_custo <= 0');
+        $out['sem_preco'] = (int)Db::value('SELECT COUNT(*) FROM produtos WHERE ativo = 1 AND preco_venda <= 0');
         $ultimo = lerConfig(['ultimo_backup'])['ultimo_backup'] ?? null;
         $out['ultimo_backup'] = $ultimo ?: null;
         $out['backup_atrasado'] = !$ultimo || strtotime($ultimo) < strtotime('-7 days');

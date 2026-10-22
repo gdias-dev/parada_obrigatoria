@@ -295,3 +295,9 @@ O manual de uso para a loja está no documento "Manual do sistema Parada Obrigat
 - Nada precisa ser configurado. Opcionais no `config.php` (ver `config.example.php`):
   - `desenvolvedor_chave` → página `/api/mensalidade/dev?chave=...` com o histórico e o botão para desfazer um "já paguei";
   - `email` (SMTP) → e-mail para o desenvolvedor no "já paguei" e no atraso.
+
+### Produtos sem preço de venda
+- Produto pode ser cadastrado (na tela ou pela planilha) sem preço de venda. Ele aparece com "sem preço",
+  no filtro **Sem preço** da lista de produtos e num aviso na tela inicial do administrador.
+- Não pode ser vendido (PDV, comanda, pedido por telefone) e não aparece na loja online até ter preço.
+- O preço pode ser colocado em Produtos → Editar, ou preenchendo a planilha e importando de novo (use "Não mexer" no estoque).

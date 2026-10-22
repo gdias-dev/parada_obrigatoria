@@ -31,6 +31,7 @@ export default function Inicio() {
   const avisos = []
   if (p?.pedidos.novos) avisos.push({ para: '/pedidos', txt: `${p.pedidos.novos === 1 ? '1 pedido online novo' : `${p.pedidos.novos} pedidos online novos`} esperando aceite`, forte: true })
   if (isAdmin && p?.backup_atrasado) avisos.push({ para: '/loja', txt: p.ultimo_backup ? 'Faz mais de 7 dias do último backup — baixe um agora' : 'Nenhum backup feito ainda — baixe o primeiro', icone: DatabaseBackup })
+  if (isAdmin && p?.sem_preco) avisos.push({ para: '/produtos?status=sem_preco', txt: `${p.sem_preco} ${p.sem_preco === 1 ? 'produto está' : 'produtos estão'} sem preço de venda (não dá para vender)` })
   if (isAdmin && p?.sem_custo) avisos.push({ para: '/produtos', txt: `${p.sem_custo} ${p.sem_custo === 1 ? 'produto está' : 'produtos estão'} sem preço de custo (o lucro fica errado)` })
 
   return (

@@ -202,8 +202,8 @@ export default function ProdutoModal({ produto, categorias, onFechar, onSalvo })
                 {(p) => <InputDinheiro {...p} value={f.preco_custo} onChange={set('preco_custo')} />}
               </Campo>
             )}
-            <Campo rotulo="Preço de venda" erro={erro.preco_venda} dica="Quanto o cliente paga">
-              {(p) => <InputDinheiro {...p} value={f.preco_venda} onChange={set('preco_venda')} required />}
+            <Campo rotulo="Preço de venda" erro={erro.preco_venda} dica="Pode deixar vazio e colocar depois (sem preço, não dá para vender)">
+              {(p) => <InputDinheiro {...p} value={f.preco_venda} onChange={set('preco_venda')} />}
             </Campo>
           </div>
           <div className={`lucro-previa ${lucro !== null && lucro < 0 ? 'negativo' : ''}`} aria-live="polite">

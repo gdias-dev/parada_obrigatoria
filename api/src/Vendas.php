@@ -22,6 +22,7 @@ final class Vendas
             $id = (int)($r['produto_id'] ?? 0);
             $p = Db::one(SQL_PRODUTO . ' WHERE p.id = ?', [$id]) ?? throw new HttpError(422, 'Produto não encontrado.');
             if (!$p['ativo']) throw new HttpError(422, "\"{$p['nome']}\" está desativado.");
+            if ((float)$p['preco_venda'] <= 0) throw new HttpError(422, "\"{$p['nome']}\" está sem preço de venda. Cadastre o preço em Produtos antes de vender.");
 
             $qtd = V::parseNumber($r['quantidade'] ?? 1);
             if ($qtd === null || $qtd <= 0 || $qtd > 100000) throw new HttpError(422, "Quantidade inválida para \"{$p['nome']}\".");
