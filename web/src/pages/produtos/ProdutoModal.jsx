@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { ScanBarcode, Search } from 'lucide-react'
-import { get, post, put } from '../../lib/api'
+import { Camera, ImageOff, ScanBarcode, Search, Trash2 } from 'lucide-react'
+import { del, enviarArquivo, get, post, put } from '../../lib/api'
+import { reduzirImagem } from '../../lib/imagem'
 import { dinheiro, numero, paraCampo, porcentagem } from '../../lib/format'
 import { Alerta, Botao, Campo, InputDinheiro, InputQtd, Modal, useToast } from '../../components/ui'
 
@@ -22,11 +23,14 @@ export default function ProdutoModal({ produto, categorias, onFechar, onSalvo })
   const [f, setF] = useState(VAZIO)
   const [erro, setErro] = useState({})
   const [enviando, setEnviando] = useState(false)
+  // foto: { arquivo: Blob, url: preview } para trocar | 'remover' | null = não mexe
+  const [foto, setFoto] = useState(null)
   const novo = produto && !produto.id
 
   useEffect(() => {
     if (!produto) return
     setErro({})
+    setFoto(null)
     setF(produto.id ? {
       ...VAZIO, ...produto,
       codigo_barras: produto.codigo_barras || '',
@@ -73,7 +77,13 @@ export default function ProdutoModal({ produto, categorias, onFechar, onSalvo })
         base: undefined, tipo: undefined, volume_base: undefined,
       }
       if (emb && !corpo.produto_base_id) throw { message: dose ? 'Escolha a garrafa desta dose.' : 'Escolha de qual produto é este engradado.', data: { campo: 'produto_base_id' } }
-      const salvo = novo ? await post('/produtos', corpo) : await put(`/produtos/${produto.id}`, corpo)
+      let salvo = novo ? await post('/produtos', corpo) : await put(`/produtos/${produto.id}`, corpo)
+      try {
+        if (foto?.arquivo) salvo = await enviarArquivo(`/produtos/${salvo.id}/foto`, 'foto', foto.arquivo)
+        else if (foto === 'remover') salvo = await del(`/produtos/${salvo.id}/foto`)
+      } catch (err) {
+        toast(`Produto salvo, mas a foto não foi: ${err.message}`, 'erro')
+      }
       toast(novo ? `${salvo.nome} cadastrado.` : 'Produto atualizado.')
       onSalvo(salvo)
     } catch (err) {
@@ -125,6 +135,8 @@ export default function ProdutoModal({ produto, categorias, onFechar, onSalvo })
             </div>
           )}
         </Campo>
+
+        <FotoCampo atual={produto?.tem_foto ? produto.imagem : null} herdada={!produto?.tem_foto ? produto?.imagem : null} foto={foto} setFoto={setFoto} onErro={(m) => setErro({ geral: m })} />
 
         <Campo rotulo="Nome do produto" erro={erro.nome} id="prod-nome">
           {(p) => <input {...p} className="input" value={f.nome} onChange={set('nome')} required minLength={2} maxLength={150} placeholder="Ex.: Cerveja Heineken Long Neck 330ml" />}
@@ -301,6 +313,45 @@ function EscolherBase({ valor, onEscolher, proprioId, id, placeholder = 'Digite 
           ))}
         </ul>
       )}
+    </div>
+  )
+}
+
+/** Foto do produto: escolher da galeria, tirar com a câmera (celular) ou remover. */
+function FotoCampo({ atual, herdada, foto, setFoto, onErro }) {
+  const [preparando, setPreparando] = useState(false)
+  useEffect(() => () => { if (foto?.url) URL.revokeObjectURL(foto.url) }, [foto])
+  const mostrar = foto === 'remover' ? null : foto?.url || atual
+  async function escolher(e) {
+    const arq = e.target.files?.[0]
+    e.target.value = ''
+    if (!arq) return
+    setPreparando(true)
+    try {
+      const blob = await reduzirImagem(arq)
+      setFoto({ arquivo: blob, url: URL.createObjectURL(blob) })
+    } catch (err) { onErro(err.message) } finally { setPreparando(false) }
+  }
+  return (
+    <div className="foto-campo">
+      <div className="foto-previa">
+        {mostrar ? <img src={mostrar} alt="Foto do produto" /> : herdada && foto !== 'remover' ? <img src={herdada} alt="" className="herdada" /> : <ImageOff size={28} aria-hidden />}
+      </div>
+      <div className="foto-acoes">
+        <strong>Foto</strong>
+        <small>{foto?.arquivo ? 'Nova foto: é enviada ao salvar.' : foto === 'remover' ? 'A foto será removida ao salvar.' : mostrar ? 'Aparece no PDV e na loja online.' : herdada ? 'Usando a foto da unidade/garrafa.' : 'Opcional. Aparece no PDV e na loja online.'}</small>
+        <div>
+          <label className="btn btn-borda">
+            <Camera size={16} aria-hidden /> {preparando ? 'Preparando…' : mostrar ? 'Trocar foto' : 'Escolher foto'}
+            <input type="file" accept="image/*" className="sr-only" onChange={escolher} disabled={preparando} />
+          </label>
+          {(mostrar || foto) && (
+            <button type="button" className="btn btn-texto" onClick={() => setFoto(foto?.arquivo ? null : 'remover')}>
+              <Trash2 size={16} aria-hidden /> {foto?.arquivo ? 'Desfazer' : 'Remover'}
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

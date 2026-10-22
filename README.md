@@ -301,3 +301,11 @@ O manual de uso para a loja está no documento "Manual do sistema Parada Obrigat
   no filtro **Sem preço** da lista de produtos e num aviso na tela inicial do administrador.
 - Não pode ser vendido (PDV, comanda, pedido por telefone) e não aparece na loja online até ter preço.
 - O preço pode ser colocado em Produtos → Editar, ou preenchendo a planilha e importando de novo (use "Não mexer" no estoque).
+
+### Fotos dos produtos
+- Produtos → Editar → **Escolher foto** (no celular abre a câmera ou a galeria). A foto é reduzida no aparelho
+  e regravada no servidor como JPEG de até 1000 px (some qualquer conteúdo escondido no arquivo).
+- Aparece na lista de produtos, na busca e nos botões do PDV/comanda e na loja online. Engradado e dose sem foto
+  própria usam a foto da unidade/garrafa.
+- Os arquivos ficam em `/uploads/produtos/` na raiz do site (criada sozinha, com `.htaccess` que só serve imagens).
+  **Nunca apague a pasta `uploads` ao atualizar**, e baixe-a pelo FileZilla de vez em quando: as fotos não vão no backup `.sql`.

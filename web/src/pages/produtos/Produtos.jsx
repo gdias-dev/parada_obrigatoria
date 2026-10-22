@@ -217,12 +217,17 @@ export default function Produtos() {
                 return (
                   <tr key={p.id} className={p.ativo ? '' : 'linha-inativa'}>
                     <td className="col-produto">
+                      <div className="prod-com-foto">
+                      {p.imagem ? <img className="prod-thumb" src={p.imagem} alt="" loading="lazy" /> : dados.itens.some((x) => x.imagem) && <i className="prod-thumb sem-foto" aria-hidden />}
+                      <div>
                       <strong>{p.nome}</strong>
                       <span className="nome-sub">
                         {p.categoria || 'Sem categoria'}{p.codigo_barras && ` · ${p.codigo_barras}`}{!p.ativo && ' · desativado'}
                         {p.dose_ml ? ` · dose de ${p.dose_ml} ml de ${p.base_nome}` : p.produto_base_id && ` · engradado com ${p.fator} × ${p.base_nome}`}
                         {p.usa_casco && ` · casco ${dinheiro(p.valor_casco)}`}
                       </span>
+                      </div>
+                      </div>
                     </td>
                     <td className="num" data-rotulo="Estoque">
                       {p.produto_base_id

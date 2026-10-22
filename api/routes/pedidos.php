@@ -39,6 +39,7 @@ $r->get('/publico/cardapio', function () {
         $usaCasco = ehEmbalagem($p) ? (bool)$p['base_usa_casco'] : (bool)$p['usa_casco'];
         $cats[$cid]['produtos'][] = [
             'id' => (int)$p['id'], 'nome' => $p['nome'], 'descricao' => $p['descricao'],
+            'imagem' => fotoUrl($p['imagem'] ?: (ehEmbalagem($p) ? $p['base_imagem'] : null)),
             'preco' => (float)$p['preco_venda'], 'unidade' => $p['unidade'],
             'disponivel' => disponivelOnline($p),
             'casco' => $usaCasco ? [

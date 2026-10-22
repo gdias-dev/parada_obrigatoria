@@ -93,6 +93,7 @@ const BuscaProduto = forwardRef(function BuscaProduto({ onEscolher, onErro, auto
           {resultados.map((p, i) => (
             <li key={p.id} role="option" aria-selected={i === ativo}>
               <button onMouseDown={(e) => e.preventDefault()} onClick={() => escolher(p)} className={i === ativo ? 'ativo' : ''}>
+                {p.imagem ? <img className="busca-thumb" src={p.imagem} alt="" loading="lazy" /> : <span className="busca-thumb sem-foto" aria-hidden />}
                 <span>
                   <strong>{p.nome}</strong>
                   <small>{infoEstoque(p)}</small>
@@ -117,8 +118,10 @@ const BuscaProduto = forwardRef(function BuscaProduto({ onEscolher, onErro, auto
           </div>
           <div className="grade-produtos">
             {grade.map((p) => (
-              <button key={p.id} className="tile" onClick={() => escolher(p, mult)}>
-                <span className="tile-nome">{p.nome}</span>
+              <button key={p.id} className={`tile ${p.imagem ? 'tile-foto' : ''}`} onClick={() => escolher(p, mult)}>
+                {p.imagem
+                  ? <span className="tile-topo"><img className="tile-img" src={p.imagem} alt="" loading="lazy" /><span className="tile-nome">{p.nome}</span></span>
+                  : <span className="tile-nome">{p.nome}</span>}
                 <span className="tile-rodape">
                   <b>{p.preco_venda > 0 ? dinheiro(p.preco_venda) : <span className="falta">sem preço</span>}</b>
                   <small className={estiloEstoque(p)}>{infoEstoque(p, true)}</small>

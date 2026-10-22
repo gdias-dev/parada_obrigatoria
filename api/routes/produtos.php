@@ -12,7 +12,7 @@ const UNIDADES = ['UN', 'KG', 'L', 'CX', 'PCT'];
 const SQL_PRODUTO = 'SELECT p.*, c.nome AS categoria,
         b.nome AS base_nome, b.estoque AS base_estoque, b.preco_custo AS base_custo, b.unidade AS base_unidade,
         b.controla_estoque AS base_controla, b.usa_casco AS base_usa_casco, b.valor_casco AS base_valor_casco,
-        b.volume_ml AS base_volume_ml
+        b.volume_ml AS base_volume_ml, b.imagem AS base_imagem
     FROM produtos p
     LEFT JOIN categorias c ON c.id = p.categoria_id
     LEFT JOIN produtos b ON b.id = p.produto_base_id';
@@ -42,6 +42,11 @@ function custoProduto(array $p): float
     return ehEmbalagem($p) ? round((float)$p['base_custo'] * (float)$p['fator'], 2) : (float)$p['preco_custo'];
 }
 
+function fotoUrl(?string $rel): ?string
+{
+    return $rel ? '/' . ltrim($rel, '/') : null;
+}
+
 /** Funcionário não recebe custo nem margem. */
 function produtoOut(array $p): array
 {
@@ -60,6 +65,9 @@ function produtoOut(array $p): array
         'controla_estoque' => (bool)$p['controla_estoque'],
         'visivel_online'   => (bool)$p['visivel_online'],
         'descricao'        => $p['descricao'],
+        // foto: engradado e dose sem foto própria usam a da unidade/garrafa
+        'imagem'           => fotoUrl($p['imagem'] ?: ($emb ? ($p['base_imagem'] ?? null) : null)),
+        'tem_foto'         => (bool)$p['imagem'],
         'ativo'            => (bool)$p['ativo'],
         'atualizado_em'    => $p['atualizado_em'],
         // engradado / fardo / pack

@@ -65,3 +65,22 @@ export async function baixarArquivo(path, nomePadrao) {
   setTimeout(() => URL.revokeObjectURL(url), 2000)
   return { nome, tamanho: blob.size }
 }
+
+/** Envia um arquivo (multipart) para a API com o login. */
+export async function enviarArquivo(path, campo, blob, nome = 'foto.jpg') {
+  const fd = new FormData()
+  fd.append(campo, blob, nome)
+  let res
+  try {
+    res = await fetch(`/api${path}`, { method: 'POST', headers: { Authorization: `Bearer ${tokenStore.get()}`, Accept: 'application/json' }, body: fd })
+  } catch {
+    throw new ApiError(0, { erro: 'Sem conexão com o servidor. Verifique a internet.' })
+  }
+  let data = null
+  try { data = await res.json() } catch {}
+  if (!res.ok) {
+    if (res.status === 401) onUnauthorized()
+    throw new ApiError(res.status, data)
+  }
+  return data
+}

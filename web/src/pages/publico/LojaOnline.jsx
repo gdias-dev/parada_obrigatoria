@@ -99,6 +99,7 @@ export default function LojaOnline() {
                 const q = sacola[p.id]?.qtd || 0
                 return (
                   <li key={p.id} className={p.disponivel ? '' : 'esgotado'}>
+                    {p.imagem && <img className="lp-foto" src={p.imagem} alt="" loading="lazy" />}
                     <div className="lp-info">
                       <strong>{p.nome}</strong>
                       {p.descricao && <small>{p.descricao}</small>}
