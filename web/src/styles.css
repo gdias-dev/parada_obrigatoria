@@ -1108,3 +1108,54 @@ textarea.input { padding: 10px 14px; min-height: 72px; resize: vertical; }
 .tile-topo .tile-nome { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .tile-img { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; background: #fff; flex-shrink: 0; border: 1px solid var(--linha); }
 .lp-foto { width: 64px; height: 64px; border-radius: 10px; object-fit: cover; flex-shrink: 0; background: #fff; border: 1px solid var(--linha); }
+
+/* ===================== Códigos e fotos (passar a prateleira) ===================== */
+.prat-abas { margin-bottom: 16px; }
+.prat-abas button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.prat-leitor { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+.prat-leitor .input-prefixo { flex: 1; min-width: 240px; }
+.prat-leitor .input { font-size: 1.1rem; min-height: 54px; }
+.prat-dica p { margin: 0; color: var(--texto-2); }
+.prat-cartao { margin-bottom: 16px; border: 2px solid var(--chope); }
+.prat-produto { display: grid; gap: 2px; margin-bottom: 12px; }
+.prat-produto strong { font-size: 1.15rem; }
+.prat-produto small { color: var(--texto-3); }
+.prat-sugestao { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 16px; align-items: start; }
+.prat-sugestao img, .prat-sem { width: 160px; height: 160px; object-fit: contain; background: #fff; border: 1px solid var(--linha); border-radius: var(--r); display: grid; place-items: center; color: var(--texto-3); }
+.prat-sugestao p { margin: 0 0 10px; }
+.prat-botoes { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.prat-botoes label.btn { cursor: pointer; }
+.prat-escolher { display: grid; gap: 10px; }
+.prat-escolher p { margin: 0; }
+.prat-escolher .busca { position: relative; display: flex; align-items: center; }
+.prat-escolher .busca svg { position: absolute; left: 12px; color: var(--texto-3); }
+.prat-escolher .busca .input { padding-left: 36px; }
+.prat-escolher .chip { justify-self: start; }
+.prat-lista { position: static; box-shadow: none; border: 1px solid var(--linha); max-height: 320px; overflow: auto; }
+.prat-lista button { display: flex; align-items: center; gap: 10px; width: 100%; }
+.prat-historico ul { list-style: none; margin: 0; padding: 4px 20px 12px; display: grid; gap: 6px; font-size: .9rem; }
+.prat-historico li { display: flex; gap: 8px; align-items: center; }
+.prat-historico li svg { color: var(--ok); flex-shrink: 0; }
+.prat-historico li span { color: var(--texto-3); }
+.prat-camera { position: relative; border-radius: var(--r); overflow: hidden; background: #000; aspect-ratio: 4 / 3; }
+.prat-camera video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.prat-mira { position: absolute; left: 10%; right: 10%; top: 40%; height: 20%; border: 3px solid var(--chope); border-radius: 8px; box-shadow: 0 0 0 999px rgb(0 0 0 / .35); }
+.prat-lote-topo { display: grid; gap: 10px; margin-bottom: 16px; }
+.prat-lote-topo p { margin: 0; }
+.prat-progresso { height: 8px; background: var(--fundo); border-radius: 4px; overflow: hidden; }
+.prat-progresso i { display: block; height: 100%; background: var(--chope-forte); transition: width .2s; }
+.prat-grade { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.prat-grade li { display: flex; gap: 12px; padding: 12px; }
+.prat-grade-img { width: 84px; height: 84px; flex-shrink: 0; display: grid; place-items: center; background: #fff; border: 1px solid var(--linha); border-radius: var(--r); color: var(--texto-3); overflow: hidden; }
+.prat-grade-img img { width: 100%; height: 100%; object-fit: contain; }
+.prat-grade-info { display: grid; gap: 4px; min-width: 0; align-content: start; }
+.prat-grade-info strong { font-size: .92rem; line-height: 1.2; }
+.prat-grade-info small { color: var(--texto-3); font-size: .78rem; }
+.btn-mini { min-height: 32px; padding: 4px 10px; font-size: .82rem; }
+.credito-fotos { display: block; margin-top: 8px; color: var(--texto-3); font-size: .75rem; }
+.credito-fotos a { color: inherit; }
+@media (max-width: 760px) {
+  .prat-sugestao { grid-template-columns: minmax(0, 1fr); }
+  .prat-sugestao img, .prat-sem { width: 100%; height: 200px; }
+  .prat-leitor .btn { width: 100%; }
+}

@@ -19,6 +19,7 @@ import Loja from './pages/Loja'
 import AtualizacaoApp from './components/AtualizacaoApp'
 import Produtos from './pages/produtos/Produtos'
 import Importar from './pages/produtos/Importar'
+import Prateleira from './pages/produtos/Prateleira'
 import Pdv from './pages/Pdv'
 import Caixa from './pages/Caixa'
 import Comandas from './pages/Comandas'
@@ -62,6 +63,7 @@ function Rotas() {
         <Route path="loja" element={soAdmin(<Loja />)} />
         <Route path="produtos" element={<Produtos />} />
         <Route path="produtos/importar" element={soAdmin(<Importar />)} />
+        <Route path="produtos/codigos-e-fotos" element={soAdmin(<Prateleira />)} />
         <Route path="pdv" element={<Pdv />} />
         <Route path="caixa" element={<Caixa />} />
         <Route path="comandas" element={<Comandas />} />

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Plus, Search, FileSpreadsheet, Download, Tags, PackagePlus, Pencil, X } from 'lucide-react'
+import { Plus, Search, FileSpreadsheet, Download, Tags, PackagePlus, Pencil, X, ScanBarcode } from 'lucide-react'
 import { get } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
 import { dinheiro, porcentagem, quantidade } from '../../lib/format'
@@ -119,6 +119,7 @@ export default function Produtos() {
           <div className="acoes-topo">
             <Botao variante="borda" onClick={() => setVendoCategorias(true)}><Tags size={18} aria-hidden /> Categorias</Botao>
             <Botao variante="borda" onClick={exportar} carregando={exportando}><Download size={18} aria-hidden /> Exportar</Botao>
+            <Link to="/produtos/codigos-e-fotos" className="btn btn-borda"><ScanBarcode size={18} aria-hidden /> Códigos e fotos</Link>
             <Link to="/produtos/importar" className="btn btn-escuro"><FileSpreadsheet size={18} aria-hidden /> Importar planilha</Link>
             <Botao onClick={() => setEditando({})}><Plus size={18} aria-hidden /> Novo produto</Botao>
           </div>

@@ -93,3 +93,108 @@ $r->delete('/produtos/{id}/foto', function (int $id) {
     apagarFoto($prod['imagem']);
     return produtoOut(buscarProduto($id));
 });
+
+// ---------------------------------------------------------------------
+// Fotos automáticas pelo código de barras (Open Food Facts — base aberta, fotos com licença CC BY-SA)
+// ---------------------------------------------------------------------
+
+/** Base da API (pode trocar no config.php: 'open_food_facts' => 'https://world.openfoodfacts.org'). */
+function offBase(): string
+{
+    global $config;
+    return rtrim((string)($config['open_food_facts'] ?? 'https://world.openfoodfacts.org'), '/');
+}
+
+function baixarHttp(string $url, int $maxBytes, int $timeout = 8, bool $aceitar404 = false): ?string
+{
+    $ch = curl_init($url);
+    $dados = '';
+    curl_setopt_array($ch, [
+        CURLOPT_FOLLOWLOCATION => false,   // sem redirecionar: só o endereço conferido
+        CURLOPT_TIMEOUT => $timeout, CURLOPT_CONNECTTIMEOUT => 5,
+        CURLOPT_PROTOCOLS => CURLPROTO_HTTPS | CURLPROTO_HTTP,
+        CURLOPT_USERAGENT => 'ParadaObrigatoria-Sistema/1.0 (sistema de bar e mercadinho)',
+        CURLOPT_WRITEFUNCTION => function ($ch, $parte) use (&$dados, $maxBytes) {
+            $dados .= $parte;
+            return strlen($dados) > $maxBytes ? 0 : strlen($parte);   // corta arquivo grande demais
+        },
+    ]);
+    $ok = curl_exec($ch);
+    $status = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+    curl_close($ch);
+    // a API responde 404 (com JSON) quando não conhece o código
+    return $ok && (($status >= 200 && $status < 300) || ($aceitar404 && $status === 404)) ? $dados : null;
+}
+
+/** Procura o produto pelo código e devolve nome e foto sugerida (ou achou=false). */
+function sugestaoOff(string $codigo): array
+{
+    if (!preg_match('/^\d{8,14}$/', $codigo)) return ['achou' => false, 'motivo' => 'codigo'];
+    $json = baixarHttp(offBase() . "/api/v2/product/$codigo.json?fields=product_name,product_name_pt,brands,quantity,image_front_url,image_url,selected_images", 400_000, 8, true);
+    if ($json === null) return ['achou' => false, 'motivo' => 'conexao'];
+    $d = json_decode($json, true);
+    $p = $d['product'] ?? null;
+    if (!is_array($p) || !$p || (isset($d['status']) && (int)$d['status'] !== 1)) return ['achou' => false, 'motivo' => 'nao_encontrado'];
+    $sel = $p['selected_images']['front']['display'] ?? [];
+    $img = $p['image_front_url'] ?? ($sel['pt'] ?? null) ?? (is_array($sel) && $sel ? reset($sel) : null) ?? $p['image_url'] ?? null;
+    if (!is_string($img) || $img === '') $img = null;
+    $nome = trim(implode(' ', array_filter([$p['product_name_pt'] ?? $p['product_name'] ?? null, $p['brands'] ?? null, $p['quantity'] ?? null])));
+    if ($img && !fotoOffPermitida($img)) $img = null;   // só aceita foto hospedada no próprio Open Food Facts
+    return [
+        'achou' => (bool)$img,
+        'motivo' => $img ? null : 'sem_foto',
+        'nome' => $nome ?: null,
+        'imagem_url' => $img,
+    ];
+}
+
+/** Só baixa imagens do próprio Open Food Facts (nunca de um endereço qualquer). */
+function fotoOffPermitida(string $url): bool
+{
+    $h = strtolower((string)parse_url($url, PHP_URL_HOST));
+    $base = strtolower((string)parse_url(offBase(), PHP_URL_HOST));
+    return in_array(parse_url($url, PHP_URL_SCHEME), ['https', 'http'], true)
+        && ($h === $base || preg_match('/(^|\.)openfoodfacts\.(org|net)$/', $h));
+}
+
+$r->get('/produtos/foto-sugerida', function () {
+    Auth::admin();
+    $c = normalizarCodigo(Http::query('codigo'));
+    if (!$c) throw new HttpError(422, 'Informe o código.');
+    return sugestaoOff($c);
+});
+
+/** Usa a foto sugerida: baixa do Open Food Facts, regrava e liga ao produto. */
+$r->post('/produtos/{id}/foto-url', function (int $id) {
+    Auth::admin();
+    $prod = buscarProduto($id);
+    $url = (string)(Http::body()['url'] ?? '');
+    if (!fotoOffPermitida($url)) throw new HttpError(422, 'Endereço de foto não permitido.');
+    $bin = baixarHttp($url, FOTO_MAX_BYTES, 15);
+    if ($bin === null) throw new HttpError(502, 'Não foi possível baixar a foto agora. Tente de novo.');
+    $tmp = tempnam(sys_get_temp_dir(), 'foto');
+    file_put_contents($tmp, $bin);
+    try { $rel = salvarFoto($tmp); } finally { @unlink($tmp); }
+    Db::exec('UPDATE produtos SET imagem = ? WHERE id = ?', [$rel, $id]);
+    Db::exec("INSERT INTO configuracoes (chave, valor) VALUES ('fotos_open_food_facts', '1') ON DUPLICATE KEY UPDATE valor = '1'");
+    apagarFoto($prod['imagem']);
+    return produtoOut(buscarProduto($id));
+});
+
+/** Liga um código de barras a um produto (modo "passar a prateleira"). */
+$r->post('/produtos/{id}/codigo', function (int $id) {
+    Auth::admin();
+    buscarProduto($id);
+    $c = normalizarCodigo(Http::body()['codigo_barras'] ?? null);
+    if (!$c) throw new HttpError(422, 'Código inválido.');
+    checarCodigoUnico($c, $id);
+    Db::exec('UPDATE produtos SET codigo_barras = ? WHERE id = ?', [$c, $id]);
+    return produtoOut(buscarProduto($id));
+});
+
+/** Produtos com código e sem foto (para a busca automática em lote). */
+$r->get('/produtos/sem-foto', function () {
+    Auth::admin();
+    $rows = Db::all(SQL_PRODUTO . " WHERE p.ativo = 1 AND (p.imagem IS NULL OR p.imagem = '') ORDER BY p.codigo_barras IS NULL, c.nome, p.nome LIMIT 1000");
+    return array_map('produtoOut', $rows);
+});

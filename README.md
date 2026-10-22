@@ -309,3 +309,13 @@ O manual de uso para a loja está no documento "Manual do sistema Parada Obrigat
   própria usam a foto da unidade/garrafa.
 - Os arquivos ficam em `/uploads/produtos/` na raiz do site (criada sozinha, com `.htaccess` que só serve imagens).
   **Nunca apague a pasta `uploads` ao atualizar**, e baixe-a pelo FileZilla de vez em quando: as fotos não vão no backup `.sql`.
+
+### Códigos e fotos ("passar a prateleira")
+- Produtos → **Códigos e fotos** (admin). Passe o produto no leitor (ou "Ler com a câmera" no Chrome do Android):
+  - código já cadastrado → vai direto para a foto;
+  - código novo → escolha de qual produto é (ou cadastre um novo com o código já preenchido).
+- O sistema procura a foto pelo código no **Open Food Facts** (base aberta, fotos CC BY-SA) e mostra para aprovar:
+  **Usar esta foto**, **Tirar / escolher foto** ou **Pular**. A loja online mostra o crédito "Algumas fotos: Open Food Facts".
+- Aba **Fotos automáticas**: busca de uma vez as fotos de todos os produtos com código e sem foto, para aprovar uma a uma ou todas.
+- Segurança: o servidor só baixa imagens hospedadas no próprio Open Food Facts, sem seguir redirecionamentos, e regrava como JPEG.
+- O servidor precisa de acesso à internet (cURL). Endereço da base configurável: `'open_food_facts' => 'https://world.openfoodfacts.org'`.

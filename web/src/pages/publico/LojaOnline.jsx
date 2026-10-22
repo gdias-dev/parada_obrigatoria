@@ -124,6 +124,7 @@ export default function LojaOnline() {
         <footer className="loja-rodape">
           {loja.loja_endereco && <p>{loja.loja_endereco}</p>}
           {loja.loja_whatsapp && <a href={`https://wa.me/${loja.loja_whatsapp}`} target="_blank" rel="noreferrer"><MessageCircle size={16} aria-hidden /> Fale com a gente no WhatsApp</a>}
+          {dados.credito_fotos && <small className="credito-fotos">Algumas fotos: <a href="https://world.openfoodfacts.org" target="_blank" rel="noreferrer">Open Food Facts</a> (CC BY-SA)</small>}
         </footer>
       </main>
 

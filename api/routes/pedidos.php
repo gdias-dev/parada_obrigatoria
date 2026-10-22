@@ -52,7 +52,8 @@ $r->get('/publico/cardapio', function () {
         Db::all("SELECT id, nome, tipo FROM formas_pagamento WHERE ativo = 1 AND ativo_online = 1 AND tipo <> 'fiado' ORDER BY ordem, id"));
     $bairros = array_map(fn($b) => ['id' => (int)$b['id'], 'nome' => $b['nome'], 'taxa' => (float)$b['taxa']],
         Db::all('SELECT * FROM bairros_entrega WHERE ativo = 1 ORDER BY nome'));
-    return ['loja' => configLoja(), 'categorias' => array_values($cats), 'formas' => $formas, 'bairros' => $bairros];
+    $creditoFotos = Db::value("SELECT valor FROM configuracoes WHERE chave = 'fotos_open_food_facts'") === '1';
+    return ['loja' => configLoja(), 'categorias' => array_values($cats), 'formas' => $formas, 'bairros' => $bairros, 'credito_fotos' => $creditoFotos];
 });
 
 function gerarCodigoPedido(): string
