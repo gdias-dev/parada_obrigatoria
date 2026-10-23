@@ -5,6 +5,7 @@ import { get, post } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { useCaixa } from '../lib/caixa'
 import { dataHora, dinheiro, numero } from '../lib/format'
+import { Olhinho, din, usePrivacidade } from '../lib/privacidade'
 import { Alerta, Botao, Campo, InputDinheiro, Modal, useToast } from '../components/ui'
 import { ReciboModal } from '../components/Recibo'
 
@@ -92,6 +93,7 @@ function AbrirCaixa({ caixa, onAberto }) {
 }
 
 function SessaoAberta({ sessaoId, onMudou, onFechado }) {
+  usePrivacidade()
   const { isAdmin } = useAuth()
   const toast = useToast()
   const [s, setS] = useState(null)
@@ -116,8 +118,9 @@ function SessaoAberta({ sessaoId, onMudou, onFechado }) {
   return (
     <>
       <div className="resumo-caixa">
+        <Olhinho className="olhinho-caixa" />
         <div><span>Vendas</span><strong>{s.vendas}</strong>{s.canceladas > 0 && <small>{s.canceladas} cancelada{s.canceladas > 1 ? 's' : ''}</small>}</div>
-        <div><span>Total vendido</span><strong>{dinheiro(s.total_vendido)}</strong>{isAdmin && s.lucro !== undefined && <small>lucro {dinheiro(s.lucro)}</small>}</div>
+        <div><span>Total vendido</span><strong>{din(s.total_vendido)}</strong>{isAdmin && s.lucro !== undefined && <small>lucro {din(s.lucro)}</small>}</div>
         <div className="destaque"><span>Dinheiro na gaveta</span><strong>{dinheiro(s.dinheiro_esperado)}</strong><small>troco {dinheiro(s.valor_abertura)} + vendas{s.total_recebido_fiado > 0 ? ' + fiado' : ''} − retiradas</small></div>
       </div>
 
@@ -134,9 +137,9 @@ function SessaoAberta({ sessaoId, onMudou, onFechado }) {
             <table className="tabela">
               <tbody>
                 {s.por_forma.map((f) => (
-                  <tr key={f.forma}><td>{f.forma}<span className="nome-sub">{f.qtd} pagamento{f.qtd > 1 ? 's' : ''}</span></td><td className="num"><b>{dinheiro(f.valor)}</b></td></tr>
+                  <tr key={f.forma}><td>{f.forma}<span className="nome-sub">{f.qtd} pagamento{f.qtd > 1 ? 's' : ''}</span></td><td className="num"><b>{din(f.valor)}</b></td></tr>
                 ))}
-                {s.valor_cascos > 0 && <tr><td>Cascos cobrados<span className="nome-sub">depósito, não é lucro</span></td><td className="num">{dinheiro(s.valor_cascos)}</td></tr>}
+                {s.valor_cascos > 0 && <tr><td>Cascos cobrados<span className="nome-sub">depósito, não é lucro</span></td><td className="num">{din(s.valor_cascos)}</td></tr>}
               </tbody>
             </table>
           )}
@@ -146,7 +149,7 @@ function SessaoAberta({ sessaoId, onMudou, onFechado }) {
               <table className="tabela">
                 <tbody>
                   {s.recebido_fiado.map((f) => (
-                    <tr key={f.forma}><td>{f.forma}<span className="nome-sub">{f.qtd} pagamento{f.qtd > 1 ? 's' : ''} de fiado</span></td><td className="num"><b>{dinheiro(f.valor)}</b></td></tr>
+                    <tr key={f.forma}><td>{f.forma}<span className="nome-sub">{f.qtd} pagamento{f.qtd > 1 ? 's' : ''} de fiado</span></td><td className="num"><b>{din(f.valor)}</b></td></tr>
                   ))}
                 </tbody>
               </table>
@@ -179,7 +182,7 @@ function SessaoAberta({ sessaoId, onMudou, onFechado }) {
                     <strong>{v.comanda_nome ? `Comanda ${v.comanda_nome}` : `Venda nº ${v.id}`}</strong>
                     <small>{v.criado_em.slice(11, 16)} · {v.itens} ite{v.itens === 1 ? 'm' : 'ns'} · {v.formas}{v.status === 'cancelada' && ' · CANCELADA'}</small>
                   </button>
-                  <b>{dinheiro(v.total)}</b>
+                  <b>{din(v.total)}</b>
                   <button className="btn btn-texto btn-icone" onClick={() => verVenda(v.id)} aria-label={`Comprovante da venda ${v.id}`} title="Comprovante"><Receipt size={18} /></button>
                   {v.status !== 'cancelada' && (
                     <button className="btn btn-texto btn-icone" onClick={() => setCancelando(v)} aria-label={`Cancelar venda ${v.id}`} title="Cancelar venda"><Ban size={18} /></button>
@@ -333,6 +336,7 @@ function RelatorioFechamento({ s, onFechar }) {
 const Linha = ({ t, v }) => <><dt>{t}</dt><dd>{dinheiro(v)}</dd></>
 
 function Historico() {
+  usePrivacidade()
   const [lista, setLista] = useState(null)
   const [ver, setVer] = useState(null)
   useEffect(() => { get('/caixa-sessoes?limite=20').then(setLista).catch(() => setLista([])) }, [])
@@ -340,7 +344,7 @@ function Historico() {
   if (!fechadas.length) return null
   return (
     <section className="painel" style={{ marginTop: 24 }}>
-      <div className="painel-cab"><h2>Caixas fechados</h2></div>
+      <div className="painel-cab"><h2>Caixas fechados</h2><Olhinho /></div>
       <table className="tabela">
         <thead><tr><th>Caixa</th><th>Fechado</th><th className="num">Vendido</th><th className="num">Lucro</th><th className="num">Diferença</th><th><span className="sr-only">Ver</span></th></tr></thead>
         <tbody>
@@ -348,8 +352,8 @@ function Historico() {
             <tr key={s.id}>
               <td>{s.caixa}<span className="nome-sub">{s.aberto_por} → {s.fechado_por}</span></td>
               <td data-rotulo="Fechado">{dataHora(s.fechado_em)}</td>
-              <td className="num" data-rotulo="Vendido">{dinheiro(s.total_vendido)}</td>
-              <td className="num positivo" data-rotulo="Lucro">{dinheiro(s.lucro)}</td>
+              <td className="num" data-rotulo="Vendido">{din(s.total_vendido)}</td>
+              <td className="num positivo" data-rotulo="Lucro">{din(s.lucro)}</td>
               <td className={`num ${s.diferenca < 0 ? 'negativo' : ''}`} data-rotulo="Diferença">{s.diferenca === 0 ? '—' : dinheiro(s.diferenca)}</td>
               <td className="acoes"><Botao variante="texto" onClick={() => setVer(s)}><Printer size={16} aria-hidden /> Ver</Botao></td>
             </tr>

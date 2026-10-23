@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowDownRight, ArrowUpRight, FileSpreadsheet, Printer, Search, Table2, LineChart } from 'lucide-react'
 import { get } from '../lib/api'
-import { dinheiro, porcentagem, quantidade } from '../lib/format'
+import { porcentagem, quantidade } from '../lib/format'
+import { Olhinho, din, usePrivacidade } from '../lib/privacidade'
 import { Alerta, Botao, useToast } from '../components/ui'
 import { BarraCelula, GraficoBarras, GraficoLinhas, eixoDinheiro } from '../components/Graficos'
 
@@ -34,7 +35,7 @@ const textoPeriodo = (de, ate) => (de === ate ? dataLonga(de) : `${dataLonga(de)
 const ORIGENS = { balcao: 'Balcão (PDV)', comanda: 'Comandas', online: 'Pedidos online' }
 const COR_1 = 'var(--serie-1)'
 const COR_2 = 'var(--serie-2)'
-const fmtDinheiro = { eixo: eixoDinheiro, dica: dinheiro }
+const fmtDinheiro = { eixo: eixoDinheiro, dica: din }
 
 // ---------- comparação com o período anterior
 function Variacao({ atual, anterior, pontos = false }) {
@@ -49,6 +50,7 @@ function Variacao({ atual, anterior, pontos = false }) {
 }
 
 export default function Relatorios() {
+  usePrivacidade()
   const toast = useToast()
   const [periodo, setPeriodo] = useState('hoje')
   const [custom, setCustom] = useState(() => [iso(somaDias(new Date(), -6)), iso(new Date())])
@@ -97,6 +99,7 @@ export default function Relatorios() {
           <p>Quanto entrou, quanto custou e quanto sobrou de lucro.</p>
         </div>
         <div className="acoes-topo nao-imprimir">
+          <Olhinho />
           <Botao variante="borda" onClick={imprimir} disabled={!dados}><Printer size={18} aria-hidden /> Imprimir / PDF</Botao>
           <Botao variante="borda" onClick={exportar} disabled={!dados}><FileSpreadsheet size={18} aria-hidden /> Excel</Botao>
         </div>
@@ -130,12 +133,12 @@ export default function Relatorios() {
           <section className="rel-kpis" aria-label="Resumo do período">
             <div>
               <span>Faturamento</span>
-              <strong>{dinheiro(r.faturamento)}</strong>
+              <strong>{din(r.faturamento)}</strong>
               <Variacao atual={r.faturamento} anterior={a.faturamento} />
             </div>
             <div className="destaque">
               <span>Lucro líquido</span>
-              <strong className={r.lucro < 0 ? 'lucro-negativo' : ''}>{dinheiro(r.lucro)}</strong>
+              <strong className={r.lucro < 0 ? 'lucro-negativo' : ''}>{din(r.lucro)}</strong>
               <Variacao atual={r.lucro} anterior={a.lucro} />
             </div>
             <div>
@@ -146,7 +149,7 @@ export default function Relatorios() {
             <div>
               <span>Vendas</span>
               <strong>{r.vendas}</strong>
-              <small className="var-neutra">ticket médio {dinheiro(r.ticket_medio)}</small>
+              <small className="var-neutra">ticket médio {din(r.ticket_medio)}</small>
             </div>
           </section>
 
@@ -185,18 +188,18 @@ function DoFaturamentoAoLucro({ r }) {
     <section className="painel rel-dre">
       <div className="painel-cab"><h2>Do faturamento ao lucro</h2></div>
       <dl>
-        <div className="dre-total"><dt>Faturamento <small>tudo que os clientes pagaram</small></dt><dd>{dinheiro(r.faturamento)}</dd></div>
-        {r.cascos > 0 && <div><dt>− Cascos cobrados <small>depósito do vasilhame, não é venda</small></dt><dd>{dinheiro(-r.cascos)}</dd></div>}
-        <div><dt>− Custo das mercadorias <small>{porcentagem(r.cmv_pct)} do valor vendido em produtos</small></dt><dd>{dinheiro(-r.cmv)}</dd></div>
-        <div><dt>− Taxas da maquininha</dt><dd>{dinheiro(-r.taxas_maquininha)}</dd></div>
-        {r.entregadores > 0 && <div><dt>− Pago aos entregadores</dt><dd>{dinheiro(-r.entregadores)}</dd></div>}
-        <div className={`dre-lucro ${r.lucro < 0 ? 'neg' : ''}`}><dt>= Lucro líquido</dt><dd>{dinheiro(r.lucro)}</dd></div>
+        <div className="dre-total"><dt>Faturamento <small>tudo que os clientes pagaram</small></dt><dd>{din(r.faturamento)}</dd></div>
+        {r.cascos > 0 && <div><dt>− Cascos cobrados <small>depósito do vasilhame, não é venda</small></dt><dd>{din(-r.cascos)}</dd></div>}
+        <div><dt>− Custo das mercadorias <small>{porcentagem(r.cmv_pct)} do valor vendido em produtos</small></dt><dd>{din(-r.cmv)}</dd></div>
+        <div><dt>− Taxas da maquininha</dt><dd>{din(-r.taxas_maquininha)}</dd></div>
+        {r.entregadores > 0 && <div><dt>− Pago aos entregadores</dt><dd>{din(-r.entregadores)}</dd></div>}
+        <div className={`dre-lucro ${r.lucro < 0 ? 'neg' : ''}`}><dt>= Lucro líquido</dt><dd>{din(r.lucro)}</dd></div>
       </dl>
       <ul className="dre-notas">
-        {r.descontos > 0 && <li>Descontos dados: <b>{dinheiro(r.descontos)}</b> (já descontados do faturamento)</li>}
-        {r.acrescimos > 0 && <li>Acréscimos cobrados no cartão: <b>{dinheiro(r.acrescimos)}</b></li>}
-        {r.taxas_entrega > 0 && <li>Taxas de entrega cobradas: <b>{dinheiro(r.taxas_entrega)}</b></li>}
-        {r.canceladas > 0 && <li>{r.canceladas} {r.canceladas === 1 ? 'venda cancelada' : 'vendas canceladas'} ({dinheiro(r.canceladas_valor)}) — não entram nas contas</li>}
+        {r.descontos > 0 && <li>Descontos dados: <b>{din(r.descontos)}</b> (já descontados do faturamento)</li>}
+        {r.acrescimos > 0 && <li>Acréscimos cobrados no cartão: <b>{din(r.acrescimos)}</b></li>}
+        {r.taxas_entrega > 0 && <li>Taxas de entrega cobradas: <b>{din(r.taxas_entrega)}</b></li>}
+        {r.canceladas > 0 && <li>{r.canceladas} {r.canceladas === 1 ? 'venda cancelada' : 'vendas canceladas'} ({din(r.canceladas_valor)}) — não entram nas contas</li>}
         <li>Contas de luz, aluguel, salários e outras despesas fixas não entram aqui.</li>
       </ul>
     </section>
@@ -234,14 +237,14 @@ function SerieTempo({ dados, agrupar, setAgrupar }) {
           <div className="tabela-rolagem">
             <table className="tabela tabela-compacta">
               <thead><tr><th>{nome[0].toUpperCase() + nome.slice(1)}</th><th className="num">Vendas</th><th className="num">Faturamento</th><th className="num">Lucro</th></tr></thead>
-              <tbody>{pontos.map((p) => <tr key={p.periodo}><td>{p.titulo}</td><td className="num">{p.vendas}</td><td className="num">{dinheiro(p.faturamento)}</td><td className="num">{dinheiro(p.lucro)}</td></tr>)}</tbody>
+              <tbody>{pontos.map((p) => <tr key={p.periodo}><td>{p.titulo}</td><td className="num">{p.vendas}</td><td className="num">{din(p.faturamento)}</td><td className="num">{din(p.lucro)}</td></tr>)}</tbody>
             </table>
           </div>
         ) : (
           <>
             <GraficoLinhas dados={pontos} series={series} formato={fmtDinheiro}
-              descricao={`Faturamento e lucro por ${nome}. Melhor ${nome}: ${melhor?.titulo}, ${dinheiro(melhor?.faturamento)}.`} />
-            {melhor?.faturamento > 0 && <p className="dica">Melhor {nome}: <b>{melhor.titulo}</b> com {dinheiro(melhor.faturamento)} de faturamento.</p>}
+              descricao={`Faturamento e lucro por ${nome}. Melhor ${nome}: ${melhor?.titulo}, ${din(melhor?.faturamento)}.`} />
+            {melhor?.faturamento > 0 && <p className="dica">Melhor {nome}: <b>{melhor.titulo}</b> com {din(melhor.faturamento)} de faturamento.</p>}
           </>
         )}
       </div>
@@ -284,16 +287,16 @@ function AbaProdutos({ dados }) {
                 <td className="rank">{k + 1}</td>
                 <td>{p.nome}<small className="nome-sub">{p.categoria}{p.sem_custo && <span className="etiqueta etiqueta-pendente">sem custo</span>}</small></td>
                 <td className="num">{quantidade(p.quantidade)}</td>
-                <td className="num">{dinheiro(p.faturamento)}</td>
-                <td className="num esconde-cel">{dinheiro(p.custo)}</td>
-                <td className={`num ${p.lucro < 0 ? 'negativo' : ''}`}>{dinheiro(p.lucro)}</td>
+                <td className="num">{din(p.faturamento)}</td>
+                <td className="num esconde-cel">{din(p.custo)}</td>
+                <td className={`num ${p.lucro < 0 ? 'negativo' : ''}`}>{din(p.lucro)}</td>
                 <td className="num">{porcentagem(p.margem)}</td>
               </tr>
             ))}
             {!vistos.length && <tr><td colSpan="7" className="centro">Nenhum produto encontrado.</td></tr>}
           </tbody>
           {lista.length > 0 && (
-            <tfoot><tr><td className="rank"></td><td>Total ({lista.length} produtos)</td><td></td><td className="num">{dinheiro(tot.fat)}</td><td className="num esconde-cel">{dinheiro(tot.custo)}</td><td className="num">{dinheiro(tot.fat - tot.custo)}</td><td className="num">{tot.fat ? porcentagem(((tot.fat - tot.custo) / tot.fat * 100).toFixed(1)) : '—'}</td></tr></tfoot>
+            <tfoot><tr><td className="rank"></td><td>Total ({lista.length} produtos)</td><td></td><td className="num">{din(tot.fat)}</td><td className="num esconde-cel">{din(tot.custo)}</td><td className="num">{din(tot.fat - tot.custo)}</td><td className="num">{tot.fat ? porcentagem(((tot.fat - tot.custo) / tot.fat * 100).toFixed(1)) : '—'}</td></tr></tfoot>
           )}
         </table>
       </div>
@@ -313,8 +316,8 @@ function AbaCategorias({ dados }) {
           <thead><tr><th>Categoria</th><th className="num">Faturamento</th><th className="col-barra" aria-hidden></th><th className="num">Custo (CMV)</th><th className="num">CMV %</th><th className="num">Lucro</th></tr></thead>
           <tbody>{dados.categorias.map((c) => (
             <tr key={c.categoria}>
-              <td>{c.categoria}</td><td className="num">{dinheiro(c.faturamento)}</td><td className="col-barra"><BarraCelula valor={c.faturamento} max={max} /></td>
-              <td className="num">{dinheiro(c.custo)}</td><td className="num">{porcentagem(c.cmv_pct)}</td><td className="num">{dinheiro(c.lucro)}</td>
+              <td>{c.categoria}</td><td className="num">{din(c.faturamento)}</td><td className="col-barra"><BarraCelula valor={c.faturamento} max={max} /></td>
+              <td className="num">{din(c.custo)}</td><td className="num">{porcentagem(c.cmv_pct)}</td><td className="num">{din(c.lucro)}</td>
             </tr>
           ))}</tbody>
         </table>
@@ -336,8 +339,8 @@ function AbaPagamentos({ dados }) {
           <table className="tabela tabela-compacta">
             <thead><tr><th>Forma</th><th className="num">Valor</th><th className="col-barra" aria-hidden></th><th className="num">%</th><th className="num">Taxa maquininha</th></tr></thead>
             <tbody>{dados.formas.map((f) => (
-              <tr key={f.forma}><td>{f.forma}<small className="nome-sub">{f.qtd} pagamentos</small></td><td className="num">{dinheiro(f.valor)}</td>
-                <td className="col-barra"><BarraCelula valor={f.valor} max={maxF} /></td><td className="num">{porcentagem((f.valor / totF * 100).toFixed(1))}</td><td className="num">{f.taxa ? dinheiro(f.taxa) : '—'}</td></tr>
+              <tr key={f.forma}><td>{f.forma}<small className="nome-sub">{f.qtd} pagamentos</small></td><td className="num">{din(f.valor)}</td>
+                <td className="col-barra"><BarraCelula valor={f.valor} max={maxF} /></td><td className="num">{porcentagem((f.valor / totF * 100).toFixed(1))}</td><td className="num">{f.taxa ? din(f.taxa) : '—'}</td></tr>
             ))}</tbody>
           </table>
         </div>
@@ -348,7 +351,7 @@ function AbaPagamentos({ dados }) {
           <table className="tabela tabela-compacta">
             <thead><tr><th>Origem</th><th className="num">Vendas</th><th className="num">Faturamento</th><th className="col-barra" aria-hidden></th></tr></thead>
             <tbody>{dados.origens.map((o) => (
-              <tr key={o.origem}><td>{ORIGENS[o.origem] || o.origem}</td><td className="num">{o.vendas}</td><td className="num">{dinheiro(o.faturamento)}</td><td className="col-barra"><BarraCelula valor={o.faturamento} max={maxO} /></td></tr>
+              <tr key={o.origem}><td>{ORIGENS[o.origem] || o.origem}</td><td className="num">{o.vendas}</td><td className="num">{din(o.faturamento)}</td><td className="col-barra"><BarraCelula valor={o.faturamento} max={maxO} /></td></tr>
             ))}</tbody>
           </table>
         </div>
@@ -364,7 +367,7 @@ function AbaEquipe({ dados }) {
       <div className="tabela-rolar-x">
         <table className="tabela tabela-compacta">
           <thead><tr><th>Quem vendeu</th><th className="num">Vendas</th><th className="num">Faturamento</th><th className="num">Ticket médio</th></tr></thead>
-          <tbody>{dados.equipe.map((e) => <tr key={e.usuario}><td>{e.usuario}</td><td className="num">{e.vendas}</td><td className="num">{dinheiro(e.faturamento)}</td><td className="num">{dinheiro(e.ticket_medio)}</td></tr>)}</tbody>
+          <tbody>{dados.equipe.map((e) => <tr key={e.usuario}><td>{e.usuario}</td><td className="num">{e.vendas}</td><td className="num">{din(e.faturamento)}</td><td className="num">{din(e.ticket_medio)}</td></tr>)}</tbody>
         </table>
       </div>
       <p className="dica rel-nota">Comandas contam para quem fechou a comanda; pedidos online, para quem finalizou o pedido.</p>
@@ -384,7 +387,7 @@ function GraficoHoras({ dados }) {
   return (
     <>
       <GraficoBarras dados={pts} cor={COR_1} nome="Faturamento" formato={fmtDinheiro} descricao={`Faturamento por hora do dia. Pico às ${pico.hora}h.`} />
-      <p className="dica">Horário mais forte: <b>{pico.hora}h às {pico.hora}h59</b>, com {dinheiro(pico.faturamento)} em {pico.vendas} {pico.vendas === 1 ? 'venda' : 'vendas'}.</p>
+      <p className="dica">Horário mais forte: <b>{pico.hora}h às {pico.hora}h59</b>, com {din(pico.faturamento)} em {pico.vendas} {pico.vendas === 1 ? 'venda' : 'vendas'}.</p>
     </>
   )
 }
@@ -406,14 +409,14 @@ function AbaFiado({ dados }) {
         <div className="painel-cab"><h2>Fiado</h2></div>
         <div className="painel-corpo">
           <div className="rel-mini">
-            <div><span>Vendido no fiado</span><strong>{dinheiro(fiado.vendido)}</strong><small>no período</small></div>
-            <div><span>Recebido de fiado</span><strong>{dinheiro(fiado.recebido)}</strong><small>no período</small></div>
-            <div><span>Total a receber</span><strong>{dinheiro(fiado.a_receber_hoje)}</strong><small>hoje, todos os clientes</small></div>
+            <div><span>Vendido no fiado</span><strong>{din(fiado.vendido)}</strong><small>no período</small></div>
+            <div><span>Recebido de fiado</span><strong>{din(fiado.recebido)}</strong><small>no período</small></div>
+            <div><span>Total a receber</span><strong>{din(fiado.a_receber_hoje)}</strong><small>hoje, todos os clientes</small></div>
           </div>
           {fiado.devedores.length > 0 && (
             <table className="tabela tabela-compacta">
               <thead><tr><th>Quem mais deve</th><th className="num">Saldo</th></tr></thead>
-              <tbody>{fiado.devedores.map((c) => <tr key={c.id}><td>{c.nome}</td><td className="num">{dinheiro(c.saldo)}</td></tr>)}</tbody>
+              <tbody>{fiado.devedores.map((c) => <tr key={c.id}><td>{c.nome}</td><td className="num">{din(c.saldo)}</td></tr>)}</tbody>
             </table>
           )}
         </div>
@@ -424,18 +427,18 @@ function AbaFiado({ dados }) {
           <div className="tabela-rolar-x">
             <table className="tabela tabela-compacta">
               <thead><tr><th>Entregador</th><th className="num">Entregas</th><th className="num">Taxas cobradas</th><th className="num">Pago a ele</th></tr></thead>
-              <tbody>{entregas.map((e) => <tr key={e.entregador}><td>{e.entregador}</td><td className="num">{e.entregas}</td><td className="num">{dinheiro(e.taxas)}</td><td className="num">{dinheiro(e.repasse)}</td></tr>)}</tbody>
+              <tbody>{entregas.map((e) => <tr key={e.entregador}><td>{e.entregador}</td><td className="num">{e.entregas}</td><td className="num">{din(e.taxas)}</td><td className="num">{din(e.repasse)}</td></tr>)}</tbody>
             </table>
           </div>
         ) : <div className="painel-corpo"><p className="dica">Nenhuma entrega concluída no período.</p></div>}
         <div className="painel-corpo">
           <h3 className="rel-h3">Cascos e estoque</h3>
           <ul className="dre-notas">
-            <li>Cascos cobrados (cliente não trouxe o vazio): <b>{dinheiro(cascos.cobrados)}</b></li>
+            <li>Cascos cobrados (cliente não trouxe o vazio): <b>{din(cascos.cobrados)}</b></li>
             <li>Vazios trazidos pelos clientes: <b>{cascos.devolvidos_por_clientes}</b></li>
             {cascos.vazios_na_loja.map((c) => <li key={c.nome}>Vazios na loja agora — {c.nome}: <b>{c.qtd}</b></li>)}
-            <li>Mercadoria que entrou no estoque (pelo custo): <b>{dinheiro(dados.compras)}</b></li>
-            {dados.perdas > 0 && <li>Saídas de estoque sem venda (perdas, consumo): <b>{dinheiro(dados.perdas)}</b></li>}
+            <li>Mercadoria que entrou no estoque (pelo custo): <b>{din(dados.compras)}</b></li>
+            {dados.perdas > 0 && <li>Saídas de estoque sem venda (perdas, consumo): <b>{din(dados.perdas)}</b></li>}
           </ul>
         </div>
       </section>

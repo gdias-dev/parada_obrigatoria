@@ -1,11 +1,12 @@
 import { useLayoutEffect, useRef, useState } from 'react'
+import { valoresOcultos } from '../lib/privacidade'
 
 // Gráficos em SVG puro (sem biblioteca): leves, imprimem bem e funcionam offline.
 // Regras: um eixo só, linhas de 2px, barras de no máximo 24px com ponta arredondada,
 // grade discreta, legenda quando há 2+ séries e tooltip ao passar o dedo/mouse.
 
 const compacto = new Intl.NumberFormat('pt-BR', { notation: 'compact', maximumFractionDigits: 1 })
-export const eixoDinheiro = (v) => (Math.abs(v) >= 1000 ? `R$ ${compacto.format(v)}` : `R$ ${Math.round(v)}`)
+export const eixoDinheiro = (v) => (valoresOcultos() ? 'R$ ••' : Math.abs(v) >= 1000 ? `R$ ${compacto.format(v)}` : `R$ ${Math.round(v)}`)
 
 function useLargura() {
   const ref = useRef(null)

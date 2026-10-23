@@ -4,7 +4,8 @@ import { AlertTriangle, ClipboardList, DatabaseBackup, Globe, Package, ShoppingC
 import { get } from '../lib/api'
 import { useAuth } from '../lib/auth'
 import { useCaixa } from '../lib/caixa'
-import { dinheiro, quantidade, saudacao } from '../lib/format'
+import { quantidade, saudacao } from '../lib/format'
+import { Olhinho, din, usePrivacidade } from '../lib/privacidade'
 import MensalidadeAviso from '../components/MensalidadeAviso'
 
 const ATALHOS = [
@@ -15,6 +16,7 @@ const ATALHOS = [
 ]
 
 export default function Inicio() {
+  usePrivacidade()
   const { usuario, isAdmin } = useAuth()
   const { caixa, sessao } = useCaixa()
   const [p, setP] = useState(null)
@@ -75,24 +77,25 @@ export default function Inicio() {
 
       {p && isAdmin && (
         <section className="rel-kpis inicio-kpis" aria-label="Hoje">
+          <Olhinho className="olhinho-kpis" />
           <Link to="/relatorios">
             <span>Faturamento hoje</span>
-            <strong>{dinheiro(p.faturamento_hoje)}</strong>
-            <small className="var-neutra">{p.vendas_hoje} {p.vendas_hoje === 1 ? 'venda' : 'vendas'} · ontem {dinheiro(p.faturamento_ontem)}</small>
+            <strong>{din(p.faturamento_hoje)}</strong>
+            <small className="var-neutra">{p.vendas_hoje} {p.vendas_hoje === 1 ? 'venda' : 'vendas'} · ontem {din(p.faturamento_ontem)}</small>
           </Link>
           <Link to="/relatorios" className="destaque">
             <span>Lucro hoje</span>
-            <strong className={p.lucro_hoje < 0 ? 'lucro-negativo' : ''}>{dinheiro(p.lucro_hoje)}</strong>
+            <strong className={p.lucro_hoje < 0 ? 'lucro-negativo' : ''}>{din(p.lucro_hoje)}</strong>
             <small className="var-neutra">ver relatórios</small>
           </Link>
           <Link to="/clientes">
             <span>Fiado a receber</span>
-            <strong>{dinheiro(p.fiado_a_receber)}</strong>
+            <strong>{din(p.fiado_a_receber)}</strong>
             <small className="var-neutra">todos os clientes</small>
           </Link>
           <Link to="/entregas">
             <span>A pagar aos entregadores</span>
-            <strong>{dinheiro(p.entregadores_a_pagar)}</strong>
+            <strong>{din(p.entregadores_a_pagar)}</strong>
             <small className="var-neutra">entregas sem acerto</small>
           </Link>
         </section>
@@ -105,7 +108,7 @@ export default function Inicio() {
             {p.comandas.length ? (
               <ul className="inicio-lista">
                 {p.comandas.slice(0, 8).map((c) => (
-                  <li key={c.id}><Link to={`/comandas/${c.id}`}><span>{c.nome}<small>desde {c.aberta_em.slice(11, 16)}</small></span><b>{dinheiro(c.total)}</b></Link></li>
+                  <li key={c.id}><Link to={`/comandas/${c.id}`}><span>{c.nome}<small>desde {c.aberta_em.slice(11, 16)}</small></span><b>{din(c.total)}</b></Link></li>
                 ))}
                 {p.comandas.length > 8 && <li className="mais-itens">e mais {p.comandas.length - 8}</li>}
               </ul>
