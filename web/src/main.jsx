@@ -16,6 +16,7 @@ import Login from './pages/Login'
 import Inicio from './pages/Inicio'
 import Usuarios from './pages/Usuarios'
 import Loja from './pages/Loja'
+import ErroTela from './components/ErroTela'
 import AtualizacaoApp from './components/AtualizacaoApp'
 import Produtos from './pages/produtos/Produtos'
 import Importar from './pages/produtos/Importar'
@@ -88,7 +89,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <ToastProvider>
         <AuthProvider>
-          <Rotas />
+          <ErroTela><Rotas /></ErroTela>
           <AtualizacaoApp />
         </AuthProvider>
       </ToastProvider>

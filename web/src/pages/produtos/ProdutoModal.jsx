@@ -59,8 +59,8 @@ export default function ProdutoModal({ produto, categorias, onFechar, onSalvo })
   const custo = emb ? (f.base && fator ? Math.round(f.base.preco_custo * fator * 100) / 100 : 0) : (numero(f.preco_custo) ?? 0)
   const dosesPorGarrafa = dose && fator ? Math.floor(1 / fator + 1e-9) : null
   const venda = numero(f.preco_venda)
-  const lucro = venda !== null ? venda - custo : null
-  const margem = venda ? (lucro / venda) * 100 : null
+  const lucro = venda !== null && venda > 0 ? venda - custo : null   // sem preço de venda não há lucro a mostrar
+  const margem = lucro !== null ? (lucro / venda) * 100 : null
 
   async function salvar(e) {
     e.preventDefault()
